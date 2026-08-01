@@ -1,3 +1,14 @@
+<!--
+  META INSTRUCTION FOR AI:
+  - This meta-data block MUST be updated and re-written on EVERY code-generation.
+  - This metadata MUST persist in any newly generated code output.
+  - The version name pattern MUST strictly follow: YYYY.MM.DD.hhmmss (Date and Time based approach).
+  - The .html file the AI generates on new request must follow this naming: MapArtGen_VERSIONSTRING.html
+  - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
+
+   Application: MapArtGen
+  Version: 2026.08.01.14.01.02
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -519,22 +530,11 @@
   </style>
 </head>
 <body>
-  <!-- 
-    META INSTRUCTION FOR AI:
-    - This meta-data block MUST be updated and re-written on EVERY code-generation.
-    - The version name pattern MUST strictly follow: YYYY.MM.DD.hh.mm.ss (Date and Time based approach).
-    - The .html file the AI generates on new request must follow this naming: MapArtGen_VERSIONSTRING.html
-    - This metadata MUST persist in any newly generated code output.
-    - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
-
-     Application: MapArtGen
-    Version: 2026.08.01.12.20.15
-  -->
   <form id="settingsForm" style="display: contents;">
     <div class="sidebar">
       <div class="sidebar-header">
         <h1>MapArtGen</h1>
-        <div class="subtitle">The free Map Art Generator</div>
+        <div class="subtitle">A free Map Art Generator</div>
       </div>
 
       <div class="sidebar-content">
@@ -627,7 +627,6 @@
 
             <!-- Label Font Selection -->
             <div class="control-group">
-              <label>Font</label>
               <select id="labelFontSelect" autocomplete="off" title="Select font typeface for location title and coordinates">
                 <option value="'Segoe UI', system-ui, sans-serif" style="font-family: 'Segoe UI', sans-serif;">Default (Clean Sans-Serif)</option>
                 <option value="'Roboto', sans-serif" style="font-family: 'Roboto', sans-serif;">Roboto (Modern Bold)</option>
@@ -668,12 +667,12 @@
           </div>
         </div>
 
-        <!-- 5. Map Layers -->
+        <!-- 5. Colors -->
         <div class="section-block collapsed" title="Fine-tune individual vector layer styles and colors">
           <div class="section-header">
             <span class="section-header-title">
-              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-              5. Colors and Layers
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
+              5. Colors
             </span>
           </div>
           <div class="section-body">
@@ -839,29 +838,22 @@
                 <span>Buildings</span>
                 <label><input type="checkbox" id="buildingToggle" checked autocomplete="off" title="Show or hide building footprints"> On</label>
               </div>
+              
               <div class="row" style="align-items: center;">
                 <div class="color-field-inline">
                   <input type="color" id="buildingColor" value="#e8eaed" autocomplete="off" title="Set building fill color">
                   <label style="text-align: left;">Fill Color</label>
                 </div>
+                <div class="color-field-inline">
+                  <input type="color" id="buildingOutlineColor" value="#d1d5db" autocomplete="off" title="Set building outline border color">
+                  <label style="text-align: left;">Border</label>
+                </div>
               </div>
               
-              <!-- Building Outline Controls -->
-              <div class="layer-title-bar" style="margin-top: 2px; padding-top: 4px; border-top: 1px dashed #e5e7eb;">
+              <!-- Building Outline Toggle Header -->
+              <div class="layer-title-bar" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #e5e7eb;">
                 <span style="font-size: 0.68rem;">Outline</span>
                 <label><input type="checkbox" id="buildingOutlineToggle" checked autocomplete="off" title="Enable or disable building outlines"> On</label>
-              </div>
-              <div id="buildingOutlineConfigContainer">
-                <div class="row">
-                  <div class="color-field-inline">
-                    <input type="color" id="buildingOutlineColor" value="#d1d5db" autocomplete="off" title="Set building outline border color">
-                    <label style="text-align: left;">Border</label>
-                  </div>
-                  <div class="control-group">
-                    <label>Width: <span id="buildingOutlineWidthVal">1</span>px</label>
-                    <input type="range" id="buildingOutlineWidth" min="0.5" max="4" step="0.5" value="1" autocomplete="off" title="Adjust building outline width">
-                  </div>
-                </div>
               </div>
 
               <div class="control-group">
@@ -943,7 +935,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.08.01.12.20.15</span>
+          <span id="versionLabel">Version 2026.08.01.14.01.02</span>
           <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
@@ -1177,7 +1169,7 @@
         roadColor: '#374151', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#9ca3af', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#e8eaed', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#d1d5db', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#d1d5db'
       },
       'darkmode': {
         waterColor: '#1e3a8a', waterOpacity: '100', waterToggle: true,
@@ -1187,7 +1179,7 @@
         roadColor: '#9ca3af', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#4b5563', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#374151', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#6b7280', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#6b7280'
       },
       'blueprint': {
         waterColor: '#1d4ed8', waterOpacity: '100', waterToggle: true,
@@ -1197,7 +1189,7 @@
         roadColor: '#60a5fa', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#93c5fd', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#1e3a8a', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#93c5fd', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#93c5fd'
       },
       'warmvintage': {
         waterColor: '#93c5fd', waterOpacity: '100', waterToggle: true,
@@ -1207,7 +1199,7 @@
         roadColor: '#bc6c25', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#dda15e', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#e9d8a6', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#dda15e', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#dda15e'
       },
       'emerald': {
         waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
@@ -1217,7 +1209,7 @@
         roadColor: '#064e3b', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#6ee7b7', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#a7f3d0', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#059669', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#059669'
       },
       'sunset': {
         waterColor: '#f43f5e', waterOpacity: '100', waterToggle: true,
@@ -1227,7 +1219,7 @@
         roadColor: '#881337', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#fb7185', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fecdd3', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#f43f5e', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#f43f5e'
       },
       'midnight': {
         waterColor: '#6366f1', waterOpacity: '100', waterToggle: true,
@@ -1237,7 +1229,7 @@
         roadColor: '#a5b4fc', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#4f46e5', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#1e1b4b', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#818cf8', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#818cf8'
       },
       'autumn': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1247,7 +1239,7 @@
         roadColor: '#78350f', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#f59e0b', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fde68a', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#d97706', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#d97706'
       },
       'minimalgrey': {
         waterColor: '#94a3b8', waterOpacity: '100', waterToggle: true,
@@ -1257,7 +1249,7 @@
         roadColor: '#475569', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#cbd5e1', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#e2e8f0', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#cbd5e1', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#cbd5e1'
       },
       'cyberalt': {
         waterColor: '#22d3ee', waterOpacity: '100', waterToggle: true,
@@ -1267,7 +1259,7 @@
         roadColor: '#f43f5e', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#a855f7', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#27272a', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#22d3ee', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#22d3ee'
       },
       'pasteldream': {
         waterColor: '#bae6fd', waterOpacity: '100', waterToggle: true,
@@ -1277,7 +1269,7 @@
         roadColor: '#c084fc', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#e879f9', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#f5d0fe', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#e879f9', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#e879f9'
       },
       'nordic': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1287,7 +1279,7 @@
         roadColor: '#0f172a', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#64748b', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#cbd5e1', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#94a3b8', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#94a3b8'
       },
       'desert': {
         waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
@@ -1297,7 +1289,7 @@
         roadColor: '#854d0e', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#ca8a04', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fef08a', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#eab308', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#eab308'
       },
       'cherry': {
         waterColor: '#7dd3fc', waterOpacity: '100', waterToggle: true,
@@ -1307,7 +1299,7 @@
         roadColor: '#9f1239', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#fb7185', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fecdd3', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#f43f5e', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#f43f5e'
       },
       'coffee': {
         waterColor: '#7dd3fc', waterOpacity: '100', waterToggle: true,
@@ -1317,7 +1309,7 @@
         roadColor: '#451a03', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#b45309', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fcd34d', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#92400e', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#92400e'
       },
       /* New 15 Color Palette Presets */
       'lavender': {
@@ -1328,7 +1320,7 @@
         roadColor: '#5b21b6', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#8b5cf6', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#ddd6fe', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#7c3aed', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#7c3aed'
       },
       'synthwave': {
         waterColor: '#ff007f', waterOpacity: '100', waterToggle: true,
@@ -1338,7 +1330,7 @@
         roadColor: '#00f0ff', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#ff007f', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#2b1055', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#00f0ff', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#00f0ff'
       },
       'olive': {
         waterColor: '#60a5fa', waterOpacity: '100', waterToggle: true,
@@ -1348,7 +1340,7 @@
         roadColor: '#1a2e05', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#65a30d', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fde047', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#4d7c0f', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#4d7c0f'
       },
       'crimson': {
         waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
@@ -1358,7 +1350,7 @@
         roadColor: '#4c0519', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#e11d48', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fecdd3', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#be123c', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#be123c'
       },
       'solarized': {
         waterColor: '#268bd2', waterOpacity: '100', waterToggle: true,
@@ -1368,7 +1360,7 @@
         roadColor: '#cb4b16', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#657b83', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#eee8d5', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#839496', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#839496'
       },
       'matrix': {
         waterColor: '#004d40', waterOpacity: '100', waterToggle: true,
@@ -1378,7 +1370,7 @@
         roadColor: '#00ff66', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#008f53', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#002b1d', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#00ff66', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#00ff66'
       },
       'coral': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1388,7 +1380,7 @@
         roadColor: '#9a3412', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#fb923c', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fed7aa', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#f97316', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#f97316'
       },
       'slate': {
         waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
@@ -1398,7 +1390,7 @@
         roadColor: '#e2e8f0', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#475569', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#334155', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#94a3b8', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#94a3b8'
       },
       'honey': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1408,7 +1400,7 @@
         roadColor: '#78350f', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#f59e0b', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fde68a', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#d97706', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#d97706'
       },
       'ice': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1418,7 +1410,7 @@
         roadColor: '#0369a1', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#38bdf8', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#bae6fd', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#0284c7', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#0284c7'
       },
       'magma': {
         waterColor: '#3b82f6', waterOpacity: '100', waterToggle: true,
@@ -1428,7 +1420,7 @@
         roadColor: '#f97316', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#ea580c', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#44403c', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#fb923c', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#fb923c'
       },
       'forestmist': {
         waterColor: '#7dd3fc', waterOpacity: '100', waterToggle: true,
@@ -1438,7 +1430,7 @@
         roadColor: '#166534', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#4ade80', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#bbf7d0', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#22c55e', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#22c55e'
       },
       'steampunk': {
         waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
@@ -1448,7 +1440,7 @@
         roadColor: '#d97706', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#b45309', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#57534e', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#f59e0b', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#f59e0b'
       },
       'amethyst': {
         waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
@@ -1458,7 +1450,7 @@
         roadColor: '#c084fc', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#9333ea', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#581c87', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#d8b4fe', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#d8b4fe'
       },
       'monochrome': {
         waterColor: '#000000', waterOpacity: '100', waterToggle: true,
@@ -1468,7 +1460,7 @@
         roadColor: '#000000', roadOpacity: '100', roadToggle: true,
         boundaryColor: '#000000', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#cccccc', buildingOpacity: '100', buildingToggle: true,
-        buildingOutlineToggle: true, buildingOutlineColor: '#000000', buildingOutlineWidth: '1'
+        buildingOutlineToggle: true, buildingOutlineColor: '#000000'
       }
     };
 
@@ -1508,7 +1500,6 @@
 
       document.getElementById('buildingOutlineToggle').checked = set.buildingOutlineToggle;
       document.getElementById('buildingOutlineColor').value = set.buildingOutlineColor;
-      document.getElementById('buildingOutlineWidth').value = set.buildingOutlineWidth;
 
       updateBuildingOutlineVisibility();
       triggerAllLayerUpdates();
@@ -1525,16 +1516,11 @@
       }
     }
 
-    // Conditional visibility for Building Outline configuration items
+    // Conditional visibility for Building Outline configuration items (container/width removed per requirements)
     const buildingOutlineToggle = document.getElementById('buildingOutlineToggle');
-    const buildingOutlineConfigContainer = document.getElementById('buildingOutlineConfigContainer');
 
     function updateBuildingOutlineVisibility() {
-      if (buildingOutlineToggle.checked) {
-        buildingOutlineConfigContainer.style.display = 'block';
-      } else {
-        buildingOutlineConfigContainer.style.display = 'none';
-      }
+      // Logic handled via toggling visibility properties directly on layers
     }
 
     buildingOutlineToggle.addEventListener('change', updateBuildingOutlineVisibility);
@@ -1547,12 +1533,9 @@
       const toggleInput = document.getElementById('buildingToggle');
 
       const outlineColorInput = document.getElementById('buildingOutlineColor');
-      const outlineWidthInput = document.getElementById('buildingOutlineWidth');
-      const outlineWidthValSpan = document.getElementById('buildingOutlineWidthVal');
 
       function update() {
         opacityValSpan.textContent = opacityInput.value;
-        outlineWidthValSpan.textContent = outlineWidthInput.value;
 
         const style = map.getStyle();
         if (!style || !style.layers) return;
@@ -1563,7 +1546,6 @@
 
         const outlineEnabled = outlineOutlineEnabled();
         const outlineColor = outlineColorInput.value;
-        const outlineWidth = parseFloat(outlineWidthInput.value);
 
         style.layers.forEach(layer => {
           if (layer.id.toLowerCase().includes('building')) {
@@ -1581,7 +1563,6 @@
             } else if (layer.type === 'line') {
               map.setLayoutProperty(layer.id, 'visibility', outlineEnabled ? 'visible' : 'none');
               map.setPaintProperty(layer.id, 'line-color', outlineColor);
-              map.setPaintProperty(layer.id, 'line-width', outlineWidth);
               map.setPaintProperty(layer.id, 'line-opacity', opacity);
             }
           }
@@ -1598,7 +1579,6 @@
 
       buildingOutlineToggle.addEventListener('change', () => { setPresetToCustomIfManual(); update(); });
       outlineColorInput.addEventListener('input', () => { setPresetToCustomIfManual(); update(); });
-      outlineWidthInput.addEventListener('input', () => { setPresetToCustomIfManual(); update(); });
 
       updateCallbacks.push(update);
     }
@@ -1881,7 +1861,7 @@
 
       ctx.filter = 'none';
 
-      // Export Label Styles & Font Selection
+      // Export Label Styles & Font Selection (Scaled properly relative to preview layout)
       if (labelStyle.value !== 'none') {
         const hex = labelBgColor.value;
         const alpha = labelOpacity.value / 100;
@@ -1892,53 +1872,57 @@
         const style = labelStyle.value;
         const fontChoice = labelFontSelect.value;
 
+        // Base proportional factor adjustment to make export fonts/boxes match preview scale perfectly
+        const previewRefWidth = mapFrame.clientWidth;
+        const proportionalScale = targetDims.width / previewRefWidth;
+
         if (style === 'style-fullwidth') {
-          const bannerHeight = 160 * scaleFactor;
+          const bannerHeight = 160 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(bWidth, bannerY, targetDims.width - (bWidth * 2), bannerHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${42 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, bannerY + (65 * scaleFactor));
+          ctx.font = `800 ${42 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, bannerY + (65 * proportionalScale));
 
-          ctx.font = `600 ${22 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, bannerY + (115 * scaleFactor));
+          ctx.font = `600 ${22 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, bannerY + (115 * proportionalScale));
 
         } else if (style === 'style-fullwidth-right') {
-          const bannerHeight = 160 * scaleFactor;
+          const bannerHeight = 160 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(bWidth, bannerY, targetDims.width - (bWidth * 2), bannerHeight);
 
           ctx.textAlign = 'right';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${42 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width - bWidth - (40 * scaleFactor), bannerY + (65 * scaleFactor));
+          ctx.font = `800 ${42 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (65 * proportionalScale));
 
-          ctx.font = `600 ${22 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - (40 * scaleFactor), bannerY + (115 * scaleFactor));
+          ctx.font = `600 ${22 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (115 * proportionalScale));
 
         } else if (style === 'style-bottom-right') {
-          const boxWidth = 320 * scaleFactor;
-          const boxHeight = 120 * scaleFactor;
-          const boxX = targetDims.width - bWidth - boxWidth - (36 * scaleFactor);
-          const boxY = targetDims.height - bWidth - boxHeight - (36 * scaleFactor);
+          const boxWidth = 320 * proportionalScale;
+          const boxHeight = 120 * proportionalScale;
+          const boxX = targetDims.width - bWidth - boxWidth - (36 * proportionalScale);
+          const boxY = targetDims.height - bWidth - boxHeight - (36 * proportionalScale);
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (50 * scaleFactor));
+          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (50 * proportionalScale));
 
-          ctx.font = `600 ${18 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (90 * scaleFactor));
+          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (90 * proportionalScale));
 
         } else if (style === 'style-bottom-right-absolute') {
-          const boxWidth = 320 * scaleFactor;
-          const boxHeight = 120 * scaleFactor;
+          const boxWidth = 320 * proportionalScale;
+          const boxHeight = 120 * proportionalScale;
           const boxX = targetDims.width - bWidth - boxWidth;
           const boxY = targetDims.height - bWidth - boxHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -1946,85 +1930,85 @@
 
           ctx.textAlign = 'right';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, boxX + boxWidth - (20 * scaleFactor), boxY + (50 * scaleFactor));
+          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (50 * proportionalScale));
 
-          ctx.font = `600 ${18 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, boxX + boxWidth - (20 * scaleFactor), boxY + (90 * scaleFactor));
+          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (90 * proportionalScale));
 
         } else if (style === 'style-deck') {
-          const bannerHeight = 120 * scaleFactor;
-          const bannerY = targetDims.height - bWidth - bannerHeight - (30 * scaleFactor);
-          const margin = 30 * scaleFactor;
+          const bannerHeight = 120 * proportionalScale;
+          const bannerY = targetDims.height - bWidth - bannerHeight - (30 * proportionalScale);
+          const margin = 30 * proportionalScale;
 
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(bWidth + margin, bannerY, targetDims.width - (bWidth * 2) - (margin * 2), bannerHeight);
 
           ctx.textAlign = 'left';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${36 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, bWidth + margin + (30 * scaleFactor), bannerY + (70 * scaleFactor));
+          ctx.font = `800 ${36 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, bWidth + margin + (30 * proportionalScale), bannerY + (70 * proportionalScale));
 
           ctx.textAlign = 'right';
-          ctx.font = `600 ${20 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - margin - (30 * scaleFactor), bannerY + (70 * scaleFactor));
+          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - margin - (30 * proportionalScale), bannerY + (70 * proportionalScale));
 
         } else if (style === 'style-toptag') {
-          const boxWidth = 360 * scaleFactor;
-          const boxHeight = 100 * scaleFactor;
+          const boxWidth = 360 * proportionalScale;
+          const boxHeight = 100 * proportionalScale;
           const boxX = (targetDims.width - boxWidth) / 2;
-          const boxY = bWidth + (50 * scaleFactor);
+          const boxY = bWidth + (50 * proportionalScale);
 
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${30 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (45 * scaleFactor));
+          ctx.font = `800 ${30 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (45 * proportionalScale));
 
-          ctx.font = `600 ${16 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (75 * scaleFactor));
+          ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (75 * proportionalScale));
 
         } else if (style === 'style-badge') {
-          const boxWidth = 420 * scaleFactor;
-          const boxHeight = 180 * scaleFactor;
+          const boxWidth = 420 * proportionalScale;
+          const boxHeight = 180 * proportionalScale;
           const boxX = (targetDims.width - boxWidth) / 2;
           const boxY = (targetDims.height - boxHeight) / 2;
 
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
           ctx.strokeStyle = labelTextColor.value;
-          ctx.lineWidth = 4 * scaleFactor;
+          ctx.lineWidth = 4 * proportionalScale;
           ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${38 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (75 * scaleFactor));
+          ctx.font = `800 ${38 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (75 * proportionalScale));
 
-          ctx.font = `600 ${20 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (125 * scaleFactor));
+          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (125 * proportionalScale));
 
         } else {
           // Floating Box & Minimal Mode
           if (style !== 'style-minimal') {
-            const boxWidth = 320 * scaleFactor;
-            const boxHeight = 120 * scaleFactor;
+            const boxWidth = 320 * proportionalScale;
+            const boxHeight = 120 * proportionalScale;
             const boxX = (targetDims.width - boxWidth) / 2;
-            const boxY = targetDims.height - bWidth - (160 * scaleFactor);
+            const boxY = targetDims.height - bWidth - (160 * proportionalScale);
             ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
             ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
           }
 
-          const boxY = targetDims.height - bWidth - (160 * scaleFactor);
+          const boxY = targetDims.height - bWidth - (160 * proportionalScale);
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (50 * scaleFactor));
+          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (50 * proportionalScale));
 
-          ctx.font = `600 ${18 * scaleFactor}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (90 * scaleFactor));
+          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (90 * proportionalScale));
         }
       }
 
