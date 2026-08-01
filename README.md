@@ -13,3 +13,5 @@ It is inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/MapArtGen_Preview.png)
 
 
+## Usage
+- Download the .html file and double-click it
