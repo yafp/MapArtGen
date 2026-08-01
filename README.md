@@ -3,7 +3,11 @@
 
 ## About
 MapArtGen is a free Map Art Generator.
-You simply select a location and configure a few parameter and can then generate & export a high-res graphic for prints
+
+You simply select a location and configure a few parameter and can then generate & export a high-res graphic for prints.
+
+It is inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
+
 
 ## UI
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/MapArtGen_Preview.png)
