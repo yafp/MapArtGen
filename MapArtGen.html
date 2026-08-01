@@ -528,7 +528,7 @@
     - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 
      Application: MapArtGen
-    Version: 2026.08.01.11.36.00
+    Version: 2026.08.01.12.20.15
   -->
   <form id="settingsForm" style="display: contents;">
     <div class="sidebar">
@@ -613,9 +613,9 @@
             <div class="control-group">
               <select id="labelStyle" autocomplete="off" title="Select poster title layout template position">
                 <option value="none">None</option>
-                <option value="style-box" selected>Floating Box (Bottom)</option>
+                <option value="style-box">Floating Box (Bottom)</option>
                 <option value="style-bottom-right">Floating Box (Bottom-Right)</option>
-                <option value="style-bottom-right-absolute">Floating Box (Bottom-Right Corner)</option>
+                <option value="style-bottom-right-absolute" selected>Floating Box (Bottom-Right Corner)</option>
                 <option value="style-fullwidth">Full Width Banner</option>
                 <option value="style-fullwidth-right">Full Width Banner (Right Aligned)</option>
                 <option value="style-minimal">Minimalist Transparent</option>
@@ -662,8 +662,8 @@
               </div>
             </div>
             <div class="control-group">
-              <label><span id="opacityNum" style="display: none;">80</span></label>
-              <input type="range" id="labelOpacity" min="0" max="100" value="80" autocomplete="off" title="Adjust title container background opacity">
+              <label><span id="opacityNum" style="display: none;">100</span></label>
+              <input type="range" id="labelOpacity" min="0" max="100" value="100" autocomplete="off" title="Adjust title container background opacity">
             </div>
           </div>
         </div>
@@ -698,6 +698,22 @@
                 <option value="desert">Desert Sand</option>
                 <option value="cherry">Cherry Blossom</option>
                 <option value="coffee">Coffee & Cream</option>
+                <!-- 15 New Color Palette Presets -->
+                <option value="lavender">Lavender Mist</option>
+                <option value="synthwave">Synthwave 80s</option>
+                <option value="olive">Olive Grove</option>
+                <option value="crimson">Crimson Night</option>
+                <option value="solarized">Solarized Light</option>
+                <option value="matrix">Matrix Green</option>
+                <option value="coral">Coral Reef</option>
+                <option value="slate">Slate Minimal</option>
+                <option value="honey">Honey Amber</option>
+                <option value="ice">Glacial Ice</option>
+                <option value="magma">Magma Dark</option>
+                <option value="forestmist">Forest Mist</option>
+                <option value="steampunk">Steampunk Brass</option>
+                <option value="amethyst">Amethyst Glow</option>
+                <option value="monochrome">Pure Monochrome</option>
               </select>
             </div>
 
@@ -927,7 +943,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.08.01.11.36.00</span>
+          <span id="versionLabel">Version 2026.08.01.12.20.15</span>
           <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
@@ -951,7 +967,7 @@
       <div id="map"></div>
       
       <!-- Dynamic Label Overlay -->
-      <div id="mapLabelOverlay" class="map-label-overlay style-box" style="background-color: rgba(255, 255, 255, 0.8);">
+      <div id="mapLabelOverlay" class="map-label-overlay style-bottom-right-absolute" style="background-color: rgba(255, 255, 255, 1);">
         <div id="cityName" class="map-label-city" style="color: #111827;">HEIDELBERG</div>
         <div id="cityCoords" class="map-label-coords" style="color: #111827;">49.4077° N / 8.6908° E</div>
       </div>
@@ -970,8 +986,9 @@
       document.getElementById('searchInput').value = "Heidelberg";
       document.getElementById('colorPresetSelect').value = "positron";
       
-      // Explicitly set default state for section 4 (Floating Box Bottom) and section 6 (None)
-      document.getElementById('labelStyle').value = "style-box";
+      // Explicitly set default state for section 4 (Floating Box Bottom Right Absolute) and section 6 (None)
+      document.getElementById('labelStyle').value = "style-bottom-right-absolute";
+      document.getElementById('labelOpacity').value = "100";
       document.getElementById('textFilter').value = "none";
       
       updateBuildingOutlineVisibility();
@@ -983,7 +1000,8 @@
     window.addEventListener('pageshow', () => {
       const form = document.getElementById('settingsForm');
       if (form) form.reset();
-      document.getElementById('labelStyle').value = "style-box";
+      document.getElementById('labelStyle').value = "style-bottom-right-absolute";
+      document.getElementById('labelOpacity').value = "100";
       document.getElementById('textFilter').value = "none";
       document.getElementById('colorPresetSelect').value = "positron";
       updateLabelStyle();
@@ -1300,6 +1318,157 @@
         boundaryColor: '#b45309', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#fcd34d', buildingOpacity: '100', buildingToggle: true,
         buildingOutlineToggle: true, buildingOutlineColor: '#92400e', buildingOutlineWidth: '1'
+      },
+      /* New 15 Color Palette Presets */
+      'lavender': {
+        waterColor: '#a78bfa', waterOpacity: '100', waterToggle: true,
+        forestColor: '#c4b5fd', forestColorAccent: '#ddd6fe', forestOpacity: '100', forestToggle: true,
+        landColor: '#f5f3ff', landOpacity: '100', landToggle: true,
+        landCoverColor: '#ede9fe', landCoverColorAccent: '#ddd6fe', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#5b21b6', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#8b5cf6', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#ddd6fe', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#7c3aed', buildingOutlineWidth: '1'
+      },
+      'synthwave': {
+        waterColor: '#ff007f', waterOpacity: '100', waterToggle: true,
+        forestColor: '#7928ca', forestColorAccent: '#8a2be2', forestOpacity: '100', forestToggle: true,
+        landColor: '#120428', landOpacity: '100', landToggle: true,
+        landCoverColor: '#1a0b36', landCoverColorAccent: '#2b1055', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#00f0ff', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#ff007f', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#2b1055', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#00f0ff', buildingOutlineWidth: '1'
+      },
+      'olive': {
+        waterColor: '#60a5fa', waterOpacity: '100', waterToggle: true,
+        forestColor: '#365314', forestColorAccent: '#3f6212', forestOpacity: '100', forestToggle: true,
+        landColor: '#fefce8', landOpacity: '100', landToggle: true,
+        landCoverColor: '#fef08a', landCoverColorAccent: '#fde047', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#1a2e05', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#65a30d', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#fde047', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#4d7c0f', buildingOutlineWidth: '1'
+      },
+      'crimson': {
+        waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
+        forestColor: '#881337', forestColorAccent: '#9f1239', forestOpacity: '100', forestToggle: true,
+        landColor: '#fff1f2', landOpacity: '100', landToggle: true,
+        landCoverColor: '#ffe4e6', landCoverColorAccent: '#fecdd3', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#4c0519', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#e11d48', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#fecdd3', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#be123c', buildingOutlineWidth: '1'
+      },
+      'solarized': {
+        waterColor: '#268bd2', waterOpacity: '100', waterToggle: true,
+        forestColor: '#859900', forestColorAccent: '#b58900', forestOpacity: '100', forestToggle: true,
+        landColor: '#fdf6e3', landOpacity: '100', landToggle: true,
+        landCoverColor: '#eee8d5', landCoverColorAccent: '#93a1a1', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#cb4b16', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#657b83', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#eee8d5', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#839496', buildingOutlineWidth: '1'
+      },
+      'matrix': {
+        waterColor: '#004d40', waterOpacity: '100', waterToggle: true,
+        forestColor: '#003300', forestColorAccent: '#004400', forestOpacity: '100', forestToggle: true,
+        landColor: '#000d08', landOpacity: '100', landToggle: true,
+        landCoverColor: '#001a12', landCoverColorAccent: '#002b1d', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#00ff66', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#008f53', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#002b1d', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#00ff66', buildingOutlineWidth: '1'
+      },
+      'coral': {
+        waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
+        forestColor: '#f43f5e', forestColorAccent: '#fb7185', forestOpacity: '100', forestToggle: true,
+        landColor: '#fffaf0', landOpacity: '100', landToggle: true,
+        landCoverColor: '#ffedd5', landCoverColorAccent: '#fed7aa', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#9a3412', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#fb923c', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#fed7aa', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#f97316', buildingOutlineWidth: '1'
+      },
+      'slate': {
+        waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
+        forestColor: '#475569', forestColorAccent: '#64748b', forestOpacity: '100', forestToggle: true,
+        landColor: '#0f172a', landOpacity: '100', landToggle: true,
+        landCoverColor: '#1e293b', landCoverColorAccent: '#334155', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#e2e8f0', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#475569', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#334155', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#94a3b8', buildingOutlineWidth: '1'
+      },
+      'honey': {
+        waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
+        forestColor: '#b45309', forestColorAccent: '#d97706', forestOpacity: '100', forestToggle: true,
+        landColor: '#fffbeb', landOpacity: '100', landToggle: true,
+        landCoverColor: '#fef3c7', landCoverColorAccent: '#fde68a', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#78350f', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#f59e0b', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#fde68a', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#d97706', buildingOutlineWidth: '1'
+      },
+      'ice': {
+        waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
+        forestColor: '#7dd3fc', forestColorAccent: '#bae6fd', forestOpacity: '100', forestToggle: true,
+        landColor: '#f0fdf4', landOpacity: '100', landToggle: true,
+        landCoverColor: '#e0f2fe', landCoverColorAccent: '#bae6fd', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#0369a1', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#38bdf8', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#bae6fd', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#0284c7', buildingOutlineWidth: '1'
+      },
+      'magma': {
+        waterColor: '#3b82f6', waterOpacity: '100', waterToggle: true,
+        forestColor: '#9a3412', forestColorAccent: '#c2410c', forestOpacity: '100', forestToggle: true,
+        landColor: '#1c1917', landOpacity: '100', landToggle: true,
+        landCoverColor: '#292524', landCoverColorAccent: '#44403c', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#f97316', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#ea580c', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#44403c', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#fb923c', buildingOutlineWidth: '1'
+      },
+      'forestmist': {
+        waterColor: '#7dd3fc', waterOpacity: '100', waterToggle: true,
+        forestColor: '#065f46', forestColorAccent: '#047857', forestOpacity: '100', forestToggle: true,
+        landColor: '#f0fdf4', landOpacity: '100', landToggle: true,
+        landCoverColor: '#dcfce7', landCoverColorAccent: '#bbf7d0', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#166534', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#4ade80', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#bbf7d0', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#22c55e', buildingOutlineWidth: '1'
+      },
+      'steampunk': {
+        waterColor: '#0284c7', waterOpacity: '100', waterToggle: true,
+        forestColor: '#78350f', forestColorAccent: '#92400e', forestOpacity: '100', forestToggle: true,
+        landColor: '#292524', landOpacity: '100', landToggle: true,
+        landCoverColor: '#44403c', landCoverColorAccent: '#57534e', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#d97706', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#b45309', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#57534e', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#f59e0b', buildingOutlineWidth: '1'
+      },
+      'amethyst': {
+        waterColor: '#38bdf8', waterOpacity: '100', waterToggle: true,
+        forestColor: '#581c87', forestColorAccent: '#6b21a8', forestOpacity: '100', forestToggle: true,
+        landColor: '#2e1065', landOpacity: '100', landToggle: true,
+        landCoverColor: '#3b0764', landCoverColorAccent: '#581c87', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#c084fc', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#9333ea', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#581c87', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#d8b4fe', buildingOutlineWidth: '1'
+      },
+      'monochrome': {
+        waterColor: '#000000', waterOpacity: '100', waterToggle: true,
+        forestColor: '#333333', forestColorAccent: '#666666', forestOpacity: '100', forestToggle: true,
+        landColor: '#ffffff', landOpacity: '100', landToggle: true,
+        landCoverColor: '#f2f2f2', landCoverColorAccent: '#e6e6e6', landCoverOpacity: '100', landCoverToggle: true,
+        roadColor: '#000000', roadOpacity: '100', roadToggle: true,
+        boundaryColor: '#000000', boundaryOpacity: '100', boundaryToggle: true,
+        buildingColor: '#cccccc', buildingOpacity: '100', buildingToggle: true,
+        buildingOutlineToggle: true, buildingOutlineColor: '#000000', buildingOutlineWidth: '1'
       }
     };
 
