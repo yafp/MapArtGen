@@ -7,7 +7,7 @@
   - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 
    Application: MapArtGen
-  Version: 2026.08.01.14.01.02
+  Version: 2026.08.02.120000
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -344,7 +344,7 @@
       position: relative;
     }
 
-    /* Floating Zoom Controls next to preview map (4 buttons: 2 big, 2 fine) */
+    /* Floating Zoom Controls next to preview map (4 buttons + magnifier) */
     .map-zoom-controls {
       position: absolute;
       top: 28px;
@@ -379,6 +379,26 @@
     .map-zoom-btn:hover {
       background: #f3f4f6;
       color: #111827;
+    }
+
+    .map-zoom-btn.active-magnifier {
+      background: #059669;
+      color: #ffffff;
+      border-color: #047857;
+    }
+
+    /* Live Magnifier Lens element */
+    .map-magnifier-lens {
+      position: absolute;
+      border: 3px solid #111827;
+      border-radius: 50%;
+      cursor: none;
+      pointer-events: none;
+      display: none;
+      z-index: 30;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      overflow: hidden;
+      background-repeat: no-repeat;
     }
 
     .map-frame {
@@ -527,6 +547,15 @@
       margin-top: 3px;
       opacity: 0.85;
     }
+
+    .map-label-country {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 3px;
+      opacity: 0.9;
+    }
   </style>
 </head>
 <body>
@@ -534,7 +563,7 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <h1>MapArtGen</h1>
-        <div class="subtitle">A free Map Art Generator</div>
+        <div class="subtitle">A free art generator using maps</div>
       </div>
 
       <div class="sidebar-content">
@@ -646,17 +675,32 @@
               </select>
             </div>
 
+            <!-- 3 Color Fields for 3 Text Lines and Background -->
             <div class="row">
               <div class="control-group">
-                <div class="color-field-inline">
-                  <input type="color" id="labelTextColor" value="#111827" autocomplete="off" title="Choose title text color">
-                  <label style="text-align: left; display: none;">Text Color</label>
+                <div class="color-field-inline" title="Color for Line 1 (Location)">
+                  <input type="color" id="labelTextColor" value="#111827" autocomplete="off">
+                  <label style="text-align: left; display: none;">Line 1</label>
                 </div>
               </div>
               <div class="control-group">
-                <div class="color-field-inline">
-                  <input type="color" id="labelBgColor" value="#ffffff" autocomplete="off" title="Choose title container background color">
-                  <label style="text-align: left; display: none;">Background Color</label>
+                <div class="color-field-inline" title="Color for Line 2 (Coordinates)">
+                  <input type="color" id="labelCoordColor" value="#111827" autocomplete="off">
+                  <label style="text-align: left; display: none;">Line 2</label>
+                </div>
+              </div>
+              <div class="control-group">
+                <div class="color-field-inline" title="Color for Line 3 (Country)">
+                  <input type="color" id="labelCountryColor" value="#111827" autocomplete="off">
+                  <label style="text-align: left; display: none;">Line 3</label>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="control-group" style="flex: 1;">
+                <div class="color-field-inline" title="Choose title container background color">
+                  <input type="color" id="labelBgColor" value="#ffffff" autocomplete="off">
+                  <label style="text-align: left;">Background Color</label>
                 </div>
               </div>
             </div>
@@ -677,42 +721,74 @@
           </div>
           <div class="section-body">
 
-            <!-- Pre-defined Color Sets Selector -->
+            <!-- Pre-defined Color Sets Selector with 48 total sorted presets and padded ongoing numbers -->
             <div class="control-group" style="margin-bottom: 4px;">
               <label>Color Palette Preset</label>
               <select id="colorPresetSelect" autocomplete="off" title="Select a pre-defined color set for all items">
-                <option value="custom">Custom / Manual Selection</option>
-                <option value="positron" selected>Light Positron (Default)</option>
-                <option value="darkmode">Dark Mode / Neon</option>
-                <option value="blueprint">Blueprint / Technical</option>
-                <option value="warmvintage">Warm Vintage Sepia</option>
-                <option value="emerald">Emerald Forest</option>
-                <option value="sunset">Sunset Glow</option>
-                <option value="midnight">Midnight Purple</option>
-                <option value="autumn">Autumn Rust</option>
-                <option value="minimalgrey">Minimal Grey</option>
-                <option value="cyberalt">Cyberpunk Neon Alt</option>
-                <option value="pasteldream">Pastel Dream</option>
-                <option value="nordic">Nordic Frost</option>
-                <option value="desert">Desert Sand</option>
-                <option value="cherry">Cherry Blossom</option>
-                <option value="coffee">Coffee & Cream</option>
-                <!-- 15 New Color Palette Presets -->
-                <option value="lavender">Lavender Mist</option>
-                <option value="synthwave">Synthwave 80s</option>
-                <option value="olive">Olive Grove</option>
-                <option value="crimson">Crimson Night</option>
-                <option value="solarized">Solarized Light</option>
-                <option value="matrix">Matrix Green</option>
-                <option value="coral">Coral Reef</option>
-                <option value="slate">Slate Minimal</option>
-                <option value="honey">Honey Amber</option>
-                <option value="ice">Glacial Ice</option>
-                <option value="magma">Magma Dark</option>
-                <option value="forestmist">Forest Mist</option>
-                <option value="steampunk">Steampunk Brass</option>
-                <option value="amethyst">Amethyst Glow</option>
-                <option value="monochrome">Pure Monochrome</option>
+                <option value="custom">0001 - Custom / Manual Selection</option>
+                <option value="amethyst">0002 - Amethyst Glow</option>
+                <option value="autumn">0003 - Autumn Rust</option>
+                <option value="blueprint">0004 - Blueprint / Technical</option>
+                <option value="cherry">0005 - Cherry Blossom</option>
+                <option value="coffee" selected>0006 - Coffee & Cream</option>
+                <option value="coral">0007 - Coral Reef</option>
+                <option value="crimson">0008 - Crimson Night</option>
+                <option value="cyberalt">0009 - Cyberpunk Neon Alt</option>
+                <option value="darkmode">0010 - Dark Mode / Neon</option>
+                <option value="desert">0011 - Desert Sand</option>
+                <option value="emerald">0012 - Emerald Forest</option>
+                <option value="forestmist">0013 - Forest Mist</option>
+                <option value="honey">0014 - Honey Amber</option>
+                <option value="ice">0015 - Glacial Ice</option>
+                <option value="lavender">0016 - Lavender Mist</option>
+                <option value="positron">0017 - Light Positron (Default)</option>
+                <option value="magma">0018 - Magma Dark</option>
+                <option value="matrix">0019 - Matrix Green</option>
+                <option value="midnight">0020 - Midnight Purple</option>
+                <option value="minimalgrey">0021 - Minimal Grey</option>
+                <option value="monochrome">0022 - Pure Monochrome</option>
+                <option value="nordic">0023 - Nordic Frost</option>
+                <option value="olive">0024 - Olive Grove</option>
+                <option value="pasteldream">0025 - Pastel Dream</option>
+                <option value="slate">0026 - Slate Minimal</option>
+                <option value="solarized">0027 - Solarized Light</option>
+                <option value="steampunk">0028 - Steampunk Brass</option>
+                <option value="sunset">0029 - Sunset Glow</option>
+                <option value="synthwave">0030 - Synthwave 80s</option>
+                <option value="warmvintage">0031 - Warm Vintage Sepia</option>
+                <!-- 32 additional sorted presets -->
+                <option value="alpine">0032 - Alpine Snow</option>
+                <option value="baroque">0033 - Baroque Gold</option>
+                <option value="bordeaux">0034 - Bordeaux Wine</option>
+                <option value="canyon">0035 - Canyon Red Rock</option>
+                <option value="celadon">0036 - Celadon Breeze</option>
+                <option value="chalkboard">0037 - Chalkboard Dark</option>
+                <option value="citrus">0038 - Citrus Punch</option>
+                <option value="cobalt">0039 - Cobalt Spark</option>
+                <option value="copper">0040 - Copper Patina</option>
+                <option value="cosmic">0041 - Cosmic Dust</option>
+                <option value="dusk">0042 - Dusk Horizon</option>
+                <option value="Elysian">0043 - Elysian Fields</option>
+                <option value="fern">0044 - Fern Canopy</option>
+                <option value="fiesta">0045 - Fiesta Vibrant</option>
+                <option value="frostbite">0046 - Frostbite Blue</option>
+                <option value="galaxy">0047 - Galaxy Deep</option>
+                <option value="glacier">0048 - Glacier Blue</option>
+                <option value="granite">0049 - Granite Stone</option>
+                <option value="harvest">0050 - Harvest Moon</option>
+                <option value="hazelnut">0051 - Hazelnut Earth</option>
+                <option value="horizon">0052 - Horizon Line</option>
+                <option value="indigo">0053 - Indigo Night</option>
+                <option value="jungle">0054 - Jungle Safari</option>
+                <option value="lagoon">0055 - Lagoon Teal</option>
+                <option value="mocha">0056 - Mocha Roast</option>
+                <option value="nebula">0057 - Nebula Glow</option>
+                <option value="orchid">0058 - Orchid Bloom</option>
+                <option value="parchment">0059 - Parchment Scroll</option>
+                <option value="peacock">0060 - Peacock Feather</option>
+                <option value="quartz">0061 - Quartz Crystal</option>
+                <option value="redwood">0062 - Redwood Timber</option>
+                <option value="tundra">0063 - Tundra Frost</option>
               </select>
             </div>
 
@@ -905,6 +981,7 @@
                 <option value="high-contrast">High Contrast B&W</option>
                 <option value="popart">Pop Art</option>
                 <option value="invert">Invert / Night Mode</option>
+                <option value="pensil">PENSIL</option>
               </select>
             </div>
           </div>
@@ -935,7 +1012,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.08.01.14.01.02</span>
+          <span id="versionLabel">Version 2026.08.02.120000</span>
           <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
@@ -947,21 +1024,26 @@
 
   <!-- Main Viewport Area -->
   <div class="stage">
-    <!-- Floating Zoom Controls (4 buttons: Big zoom-in/out & Fine zoom-in/out) -->
+    <!-- Floating Zoom Controls (4 buttons + Magnifier toggle) -->
     <div class="map-zoom-controls">
       <button type="button" id="zoomInBigBtn" class="map-zoom-btn" title="Zoom In (Big Steps)">++</button>
       <button type="button" id="zoomInFineBtn" class="map-zoom-btn" title="Zoom In (Fine Adjustment)">+</button>
       <button type="button" id="zoomOutFineBtn" class="map-zoom-btn" title="Zoom Out (Fine Adjustment)">-</button>
       <button type="button" id="zoomOutBigBtn" class="map-zoom-btn" title="Zoom Out (Big Steps)">--</button>
+      <button type="button" id="magnifierBtn" class="map-zoom-btn" title="Toggle Live Magnifier Lens">🔍</button>
     </div>
 
     <div id="mapFrame" class="map-frame ratio-portrait" style="border: 16px solid #ffffff;">
       <div id="map"></div>
       
+      <!-- Live Magnifying Glass Lens -->
+      <div id="mapMagnifierLens" class="map-magnifier-lens"></div>
+
       <!-- Dynamic Label Overlay -->
       <div id="mapLabelOverlay" class="map-label-overlay style-bottom-right-absolute" style="background-color: rgba(255, 255, 255, 1);">
         <div id="cityName" class="map-label-city" style="color: #111827;">HEIDELBERG</div>
         <div id="cityCoords" class="map-label-coords" style="color: #111827;">49.4077° N / 8.6908° E</div>
+        <div id="cityCountry" class="map-label-country" style="color: #111827;">GERMANY</div>
       </div>
     </div>
   </div>
@@ -976,7 +1058,7 @@
       document.getElementById('borderWidth').value = "16";
       document.getElementById('borderWidthVal').textContent = "16";
       document.getElementById('searchInput').value = "Heidelberg";
-      document.getElementById('colorPresetSelect').value = "positron";
+      document.getElementById('colorPresetSelect').value = "coffee";
       
       // Explicitly set default state for section 4 (Floating Box Bottom Right Absolute) and section 6 (None)
       document.getElementById('labelStyle').value = "style-bottom-right-absolute";
@@ -987,6 +1069,7 @@
       updateBorderElementsVisibility();
       updateLabelStyle();
       applyTextFilters();
+      applyColorPreset('coffee');
     });
 
     window.addEventListener('pageshow', () => {
@@ -995,9 +1078,10 @@
       document.getElementById('labelStyle').value = "style-bottom-right-absolute";
       document.getElementById('labelOpacity').value = "100";
       document.getElementById('textFilter').value = "none";
-      document.getElementById('colorPresetSelect').value = "positron";
+      document.getElementById('colorPresetSelect').value = "coffee";
       updateLabelStyle();
       applyTextFilters();
+      applyColorPreset('coffee');
     });
 
     // Accordion Control
@@ -1037,6 +1121,56 @@
       map.zoomTo(map.getZoom() - 2, { duration: 300 });
     });
 
+    // Live Magnifier Functionality
+    const magnifierBtn = document.getElementById('magnifierBtn');
+    const mapMagnifierLens = document.getElementById('mapMagnifierLens');
+    const mapFrame = document.getElementById('mapFrame');
+    let magnifierActive = false;
+
+    magnifierBtn.addEventListener('click', () => {
+      magnifierActive = !magnifierActive;
+      if (magnifierActive) {
+        magnifierBtn.classList.add('active-magnifier');
+        mapMagnifierLens.style.display = 'block';
+      } else {
+        magnifierBtn.classList.remove('active-magnifier');
+        mapMagnifierLens.style.display = 'none';
+      }
+    });
+
+    mapFrame.addEventListener('mousemove', (e) => {
+      if (!magnifierActive) return;
+      const rect = mapFrame.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
+        mapMagnifierLens.style.display = 'none';
+        return;
+      }
+
+      mapMagnifierLens.style.display = 'block';
+      const lensSize = 140;
+      mapMagnifierLens.style.width = `${lensSize}px`;
+      mapMagnifierLens.style.height = `${lensSize}px`;
+      mapMagnifierLens.style.left = `${x - lensSize / 2}px`;
+      mapMagnifierLens.style.top = `${y - lensSize / 2}px`;
+
+      const mapCanvas = map.getCanvas();
+      mapMagnifierLens.style.backgroundImage = `url(${mapCanvas.toDataURL()})`;
+      mapMagnifierLens.style.backgroundSize = `${mapCanvas.width * 2}px ${mapCanvas.height * 2}px`;
+      
+      const fx = (x / rect.width) * mapCanvas.width * 2 - lensSize / 2;
+      const fy = (y / rect.height) * mapCanvas.height * 2 - lensSize / 2;
+      mapMagnifierLens.style.backgroundPosition = `-${fx}px -${fy}px`;
+    });
+
+    mapFrame.addEventListener('mouseleave', () => {
+      if (magnifierActive) {
+        mapMagnifierLens.style.display = 'none';
+      }
+    });
+
     map.on('load', () => {
       const style = map.getStyle();
       if (style && style.layers) {
@@ -1046,7 +1180,6 @@
           }
         });
       }
-      // Force initial execution of styling hooks to match default UI inputs instantly
       triggerAllLayerUpdates();
       applyTextFilters();
       updateLabelStyle();
@@ -1067,7 +1200,8 @@
       'vintage': 'sepia(50%) contrast(90%) saturate(85%)',
       'high-contrast': 'grayscale(100%) contrast(190%)',
       'popart': 'saturate(300%) contrast(160%) hue-rotate(90deg)',
-      'invert': 'invert(100%) hue-rotate(180deg)'
+      'invert': 'invert(100%) hue-rotate(180deg)',
+      'pensil': 'grayscale(80%) sepia(30%) contrast(140%) saturate(30%)'
     };
 
     function applyLiveFilters() {
@@ -1158,7 +1292,7 @@
       updateCallbacks.push(update);
     }
 
-    // Pre-defined color sets definitions and handler
+    // Pre-defined color sets definitions including the 32 new presets (total 48+)
     const colorPresetSelect = document.getElementById('colorPresetSelect');
     const predefinedColorSets = {
       'positron': {
@@ -1311,7 +1445,6 @@
         buildingColor: '#fcd34d', buildingOpacity: '100', buildingToggle: true,
         buildingOutlineToggle: true, buildingOutlineColor: '#92400e'
       },
-      /* New 15 Color Palette Presets */
       'lavender': {
         waterColor: '#a78bfa', waterOpacity: '100', waterToggle: true,
         forestColor: '#c4b5fd', forestColorAccent: '#ddd6fe', forestOpacity: '100', forestToggle: true,
@@ -1461,7 +1594,40 @@
         boundaryColor: '#000000', boundaryOpacity: '100', boundaryToggle: true,
         buildingColor: '#cccccc', buildingOpacity: '100', buildingToggle: true,
         buildingOutlineToggle: true, buildingOutlineColor: '#000000'
-      }
+      },
+      /* 32 Additional Presets */
+      'alpine': { waterColor: '#7dd3fc', forestColor: '#475569', landColor: '#f8fafc', landCoverColor: '#e2e8f0', roadColor: '#1e293b', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'baroque': { waterColor: '#b45309', forestColor: '#78350f', landColor: '#fef3c7', landCoverColor: '#fde68a', roadColor: '#451a03', boundaryColor: '#d97706', buildingColor: '#fcd34d', buildingOutlineColor: '#92400e', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'bordeaux': { waterColor: '#38bdf8', forestColor: '#881337', landColor: '#fff1f2', landCoverColor: '#ffe4e6', roadColor: '#4c0519', boundaryColor: '#be123c', buildingColor: '#fecdd3', buildingOutlineColor: '#9f1239', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'canyon': { waterColor: '#0284c7', forestColor: '#9a3412', landColor: '#fff7ed', landCoverColor: '#ffedd5', roadColor: '#7c2d12', boundaryColor: '#ea580c', buildingColor: '#fed7aa', buildingOutlineColor: '#c2410c', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'celadon': { waterColor: '#38bdf8', forestColor: '#065f46', landColor: '#f0fdf4', landCoverColor: '#dcfce7', roadColor: '#14532d', boundaryColor: '#10b981', buildingColor: '#bbf7d0', buildingOutlineColor: '#059669', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'chalkboard': { waterColor: '#38bdf8', forestColor: '#334155', landColor: '#1e293b', landCoverColor: '#334155', roadColor: '#f8fafc', boundaryColor: '#64748b', buildingColor: '#475569', buildingOutlineColor: '#94a3b8', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'citrus': { waterColor: '#0284c7', forestColor: '#ca8a04', landColor: '#fefce8', landCoverColor: '#fef9c3', roadColor: '#713f12', boundaryColor: '#eab308', buildingColor: '#fef08a', buildingOutlineColor: '#ca8a04', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'cobalt': { waterColor: '#60a5fa', forestColor: '#1e3a8a', landColor: '#eff6ff', landCoverColor: '#dbeafe', roadColor: '#172554', boundaryColor: '#3b82f6', buildingColor: '#bfdbfe', buildingOutlineColor: '#2563eb', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'copper': { waterColor: '#0284c7', forestColor: '#78350f', landColor: '#292524', landCoverColor: '#44403c', roadColor: '#fb923c', boundaryColor: '#d97706', buildingColor: '#57534e', buildingOutlineColor: '#f59e0b', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'cosmic': { waterColor: '#ec4899', forestColor: '#6b21a8', landColor: '#090514', landCoverColor: '#1e1b4b', roadColor: '#38bdf8', boundaryColor: '#a855f7', buildingColor: '#312e81', buildingOutlineColor: '#c084fc', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'dusk': { waterColor: '#f43f5e', forestColor: '#4c1d95', landColor: '#1e1b4b', landCoverColor: '#312e81', roadColor: '#fcd34d', boundaryColor: '#8b5cf6', buildingColor: '#3730a3', buildingOutlineColor: '#a78bfa', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'Elysian': { waterColor: '#38bdf8', forestColor: '#15803d', landColor: '#f0fdf4', landCoverColor: '#dcfce7', roadColor: '#166534', boundaryColor: '#22c55e', buildingColor: '#bbf7d0', buildingOutlineColor: '#16a34a', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'fern': { waterColor: '#0284c7', forestColor: '#14532d', landColor: '#f4fbf7', landCoverColor: '#e6f4ed', roadColor: '#064e3b', boundaryColor: '#059669', buildingColor: '#cce8d8', buildingOutlineColor: '#047857', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'fiesta': { waterColor: '#06b6d4', forestColor: '#f43f5e', landColor: '#fffbeb', landCoverColor: '#fef3c7', roadColor: '#b91c1c', boundaryColor: '#f59e0b', buildingColor: '#fde68a', buildingOutlineColor: '#d97706', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'frostbite': { waterColor: '#38bdf8', forestColor: '#0284c7', landColor: '#f0f9ff', landCoverColor: '#e0f2fe', roadColor: '#0c4a6e', boundaryColor: '#0ea5e9', buildingColor: '#bae6fd', buildingOutlineColor: '#0284c7', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'galaxy': { waterColor: '#3b82f6', forestColor: '#581c87', landColor: '#030712', landCoverColor: '#0f172a', roadColor: '#f43f5e', boundaryColor: '#8b5cf6', buildingColor: '#1e1b4b', buildingOutlineColor: '#a855f7', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'glacier': { waterColor: '#0284c7', forestColor: '#64748b', landColor: '#f8fafc', landCoverColor: '#f1f5f9', roadColor: '#0f172a', boundaryColor: '#94a3b8', buildingColor: '#e2e8f0', buildingOutlineColor: '#cbd5e1', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'granite': { waterColor: '#475569', forestColor: '#334155', landColor: '#f1f5f9', landCoverColor: '#e2e8f0', roadColor: '#0f172a', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'harvest': { waterColor: '#0284c7', forestColor: '#b45309', landColor: '#fffbeb', landCoverColor: '#fef3c7', roadColor: '#78350f', boundaryColor: '#d97706', buildingColor: '#fde68a', buildingOutlineColor: '#b45309', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'hazelnut': { waterColor: '#38bdf8', forestColor: '#78350f', landColor: '#fdf8f6', landCoverColor: '#f5ebe0', roadColor: '#432818', boundaryColor: '#b08968', buildingColor: '#d5bdaf', buildingOutlineColor: '#9c6644', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'horizon': { waterColor: '#0284c7', forestColor: '#0f172a', landColor: '#f8fafc', landCoverColor: '#e2e8f0', roadColor: '#334155', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'indigo': { waterColor: '#38bdf8', forestColor: '#3730a3', landColor: '#eef2ff', landCoverColor: '#e0e7ff', roadColor: '#312e81', boundaryColor: '#6366f1', buildingColor: '#c7d2fe', buildingOutlineColor: '#4f46e5', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'jungle': { waterColor: '#38bdf8', forestColor: '#14532d', landColor: '#f0fdf4', landCoverColor: '#dcfce7', roadColor: '#052e16', boundaryColor: '#15803d', buildingColor: '#bbf7d0', buildingOutlineColor: '#16a34a', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'lagoon': { waterColor: '#0284c7', forestColor: '#0f766e', landColor: '#f0fdfa', landCoverColor: '#ccfbf1', roadColor: '#134e4a', boundaryColor: '#14b8a6', buildingColor: '#99f6e4', buildingOutlineColor: '#0d9488', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'mocha': { waterColor: '#7dd3fc', forestColor: '#5c4033', landColor: '#f5deb3', landCoverColor: '#deb887', roadColor: '#3e2723', boundaryColor: '#8b4513', buildingColor: '#d2b48c', buildingOutlineColor: '#a0522d', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'nebula': { waterColor: '#ec4899', forestColor: '#9333ea', landColor: '#0f051d', landCoverColor: '#1e0c38', roadColor: '#22d3ee', boundaryColor: '#c084fc', buildingColor: '#2e1065', buildingOutlineColor: '#d8b4fe', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'orchid': { waterColor: '#38bdf8', forestColor: '#a21caf', landColor: '#fdf4ff', landCoverColor: '#fae8ff', roadColor: '#701a75', boundaryColor: '#d946ef', buildingColor: '#f5d0fe', buildingOutlineColor: '#c084fc', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'parchment': { waterColor: '#60a5fa', forestColor: '#a16207', landColor: '#fefae0', landCoverColor: '#faedcd', roadColor: '#654321', boundaryColor: '#dda15e', buildingColor: '#e9d8a6', buildingOutlineColor: '#bc6c25', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'peacock': { waterColor: '#38bdf8', forestColor: '#047857', landColor: '#ecfdf5', landCoverColor: '#d1fae5', roadColor: '#064e3b', boundaryColor: '#10b981', buildingColor: '#a7f3d0', buildingOutlineColor: '#059669', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'quartz': { waterColor: '#7dd3fc', forestColor: '#cbd5e1', landColor: '#f8fafc', landCoverColor: '#f1f5f9', roadColor: '#334155', boundaryColor: '#94a3b8', buildingColor: '#e2e8f0', buildingOutlineColor: '#cbd5e1', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'redwood': { waterColor: '#38bdf8', forestColor: '#7f1d1d', landColor: '#fef2f2', landCoverColor: '#fee2e2', roadColor: '#450a0a', boundaryColor: '#dc2626', buildingColor: '#fecaca', buildingOutlineColor: '#b91c1c', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
+      'tundra': { waterColor: '#38bdf8', forestColor: '#475569', landColor: '#f1f5f9', landCoverColor: '#e2e8f0', roadColor: '#1e293b', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true }
     };
 
     function applyColorPreset(presetName) {
@@ -1509,52 +1675,42 @@
       applyColorPreset(e.target.value);
     });
 
-    // Whenever any individual layer property is modified manually, switch preset selector to 'custom'
     function setPresetToCustomIfManual() {
       if (colorPresetSelect.value !== 'custom') {
         colorPresetSelect.value = 'custom';
       }
     }
 
-    // Conditional visibility for Building Outline configuration items (container/width removed per requirements)
     const buildingOutlineToggle = document.getElementById('buildingOutlineToggle');
 
-    function updateBuildingOutlineVisibility() {
-      // Logic handled via toggling visibility properties directly on layers
-    }
+    function updateBuildingOutlineVisibility() {}
 
     buildingOutlineToggle.addEventListener('change', updateBuildingOutlineVisibility);
 
-    // Dedicated Building Controls (Fill + Selectable Outline)
     function setupBuildingControls() {
       const fillInput = document.getElementById('buildingColor');
       const opacityInput = document.getElementById('buildingOpacity');
       const opacityValSpan = document.getElementById('buildingOpacityVal');
       const toggleInput = document.getElementById('buildingToggle');
-
       const outlineColorInput = document.getElementById('buildingOutlineColor');
 
       function update() {
         opacityValSpan.textContent = opacityInput.value;
-
         const style = map.getStyle();
         if (!style || !style.layers) return;
 
         const enabled = toggleInput.checked;
         const opacity = (opacityInput.value / 100) * (enabled ? 1 : 0);
         const fillColor = fillInput.value;
-
         const outlineEnabled = outlineOutlineEnabled();
         const outlineColor = outlineColorInput.value;
 
         style.layers.forEach(layer => {
           if (layer.id.toLowerCase().includes('building')) {
             map.setLayoutProperty(layer.id, 'visibility', enabled ? 'visible' : 'none');
-            
             if (layer.type === 'fill') {
               map.setPaintProperty(layer.id, 'fill-color', fillColor);
               map.setPaintProperty(layer.id, 'fill-opacity', opacity);
-
               if (outlineEnabled) {
                 map.setPaintProperty(layer.id, 'fill-outline-color', outlineColor);
               } else {
@@ -1576,14 +1732,12 @@
       fillInput.addEventListener('input', () => { setPresetToCustomIfManual(); update(); });
       opacityInput.addEventListener('input', () => { setPresetToCustomIfManual(); update(); });
       toggleInput.addEventListener('change', () => { setPresetToCustomIfManual(); update(); });
-
       buildingOutlineToggle.addEventListener('change', () => { setPresetToCustomIfManual(); update(); });
       outlineColorInput.addEventListener('input', () => { setPresetToCustomIfManual(); update(); });
 
       updateCallbacks.push(update);
     }
 
-    // Hook manual adjustments for other layers to switch to custom
     document.querySelectorAll('.layer-control-card input').forEach(input => {
       input.addEventListener('input', setPresetToCustomIfManual);
       input.addEventListener('change', setPresetToCustomIfManual);
@@ -1596,7 +1750,6 @@
     map.on('load', () => {
       applyTextFilters();
 
-      // 1. Water (Includes polygon water bodies and thin line rivers/waterways with unified color & hiding logic)
       setupLayerControls('waterColor', null, 'waterOpacity', 'waterOpacityVal', 'waterToggle',
         (id, type) => {
           if ((type === 'fill' || type === 'line') && (id.includes('water') || id.includes('ocean') || id.includes('lake') || id.includes('river') || id.includes('stream') || id.includes('canal') || id.includes('waterway'))) {
@@ -1605,7 +1758,6 @@
           return false;
         });
 
-      // 2. Greenery & Nature (Expanded matching for deep forests, wood, scrub, and nature reserves while preventing urban landcover overlaps)
       setupLayerControls('forestColor', 'forestColorAccent', 'forestOpacity', 'forestOpacityVal', 'forestToggle',
         (id, type, layer) => {
           const sourceLayer = (layer['source-layer'] || '').toLowerCase();
@@ -1626,14 +1778,12 @@
           return false;
         });
 
-      // 3. Land Background
       setupLayerControls('landColor', null, 'landOpacity', 'landOpacityVal', 'landToggle',
         (id, type) => {
           if (type === 'background' || id === 'background' || id.includes('background')) return 'main';
           return false;
         });
 
-      // 4. Land Cover / Urban Areas
       setupLayerControls('landCoverColor', 'landCoverColorAccent', 'landCoverOpacity', 'landCoverOpacityVal', 'landCoverToggle',
         (id) => {
           if (id.includes('residential')) return 'accent';
@@ -1641,7 +1791,6 @@
           return false;
         });
 
-      // 5. Roads & Streets (Includes Roads, Streets, Bridges, and Traintracks into a single color scheme)
       setupLayerControls('roadColor', null, 'roadOpacity', 'roadOpacityVal', 'roadToggle',
         (id, type) => {
           if (type === 'line' && (id.includes('road') || id.includes('street') || id.includes('highway') || id.includes('transport') || id.includes('bridge') || id.includes('rail') || id.includes('train') || id.includes('track'))) {
@@ -1650,7 +1799,6 @@
           return false;
         });
 
-      // 5b. Country Borders (Administrative boundaries, continent outlines, and country lines combined)
       setupLayerControls('boundaryColor', null, 'boundaryOpacity', 'boundaryOpacityVal', 'boundaryToggle',
         (id, type, layer) => {
           const sourceLayer = (layer['source-layer'] || '').toLowerCase();
@@ -1660,18 +1808,16 @@
           return false;
         });
 
-      // 6. Buildings
       setupBuildingControls();
-
-      // Apply default positron preset colors explicitly on initial load
-      applyColorPreset('positron');
+      applyColorPreset('coffee');
     });
 
-    // Search via Nominatim
+    // Search via Nominatim & Reverse Geocoding for Country Extraction
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
     const cityNameEl = document.getElementById('cityName');
     const cityCoordsEl = document.getElementById('cityCoords');
+    const cityCountryEl = document.getElementById('cityCountry');
     let debounceTimer;
 
     function updateCoordsDisplay() {
@@ -1682,6 +1828,16 @@
     }
 
     map.on('move', updateCoordsDisplay);
+
+    function fetchCountryForCoordinates(lat, lon) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=3`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.address && data.address.country) {
+            cityCountryEl.textContent = data.address.country.toUpperCase();
+          }
+        }).catch(() => {});
+    }
 
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
@@ -1700,9 +1856,18 @@
               div.className = 'search-item';
               div.textContent = item.display_name;
               div.addEventListener('click', () => {
-                map.flyTo({ center: [parseFloat(item.lon), parseFloat(item.lat)], zoom: 12 });
+                const lat = parseFloat(item.lat);
+                const lon = parseFloat(item.lon);
+                map.flyTo({ center: [lon, lat], zoom: 12 });
                 cityNameEl.textContent = item.display_name.split(',')[0].toUpperCase();
                 searchInput.value = item.display_name.split(',')[0];
+                
+                // Extract country from address or reverse geocode
+                if (item.address && item.address.country) {
+                  cityCountryEl.textContent = item.address.country.toUpperCase();
+                } else {
+                  fetchCountryForCoordinates(lat, lon);
+                }
                 searchResults.style.display = 'none';
               });
               searchResults.appendChild(div);
@@ -1718,10 +1883,12 @@
       }
     });
 
-    // Text Label Overlay & Font Styling
+    // Text Label Overlay & Font Styling (with 3 separate color fields)
     const mapLabelOverlay = document.getElementById('mapLabelOverlay');
     const labelStyle = document.getElementById('labelStyle');
     const labelTextColor = document.getElementById('labelTextColor');
+    const labelCoordColor = document.getElementById('labelCoordColor');
+    const labelCountryColor = document.getElementById('labelCountryColor');
     const labelBgColor = document.getElementById('labelBgColor');
     const labelOpacity = document.getElementById('labelOpacity');
     const opacityNum = document.getElementById('opacityNum');
@@ -1730,11 +1897,11 @@
     function updateLabelStyle() {
       opacityNum.textContent = labelOpacity.value;
 
-      // Update font family
       const selectedFont = labelFontSelect.value;
       mapLabelOverlay.style.fontFamily = selectedFont;
       cityNameEl.style.fontFamily = selectedFont;
       cityCoordsEl.style.fontFamily = selectedFont;
+      cityCountryEl.style.fontFamily = selectedFont;
 
       if (labelStyle.value === 'none') {
         mapLabelOverlay.style.display = 'none';
@@ -1755,18 +1922,20 @@
         }
 
         cityNameEl.style.color = labelTextColor.value;
-        cityCoordsEl.style.color = labelTextColor.value;
+        cityCoordsEl.style.color = labelCoordColor.value;
+        cityCountryEl.style.color = labelCountryColor.value;
       }
     }
 
     labelStyle.addEventListener('change', updateLabelStyle);
     labelTextColor.addEventListener('input', updateLabelStyle);
+    labelCoordColor.addEventListener('input', updateLabelStyle);
+    labelCountryColor.addEventListener('input', updateLabelStyle);
     labelBgColor.addEventListener('input', updateLabelStyle);
     labelOpacity.addEventListener('input', updateLabelStyle);
     labelFontSelect.addEventListener('change', updateLabelStyle);
 
     // Border & Aspect Ratio Controls
-    const mapFrame = document.getElementById('mapFrame');
     const borderCheckbox = document.getElementById('borderCheckbox');
     const borderColor = document.getElementById('borderColor');
     const borderWidth = document.getElementById('borderWidth');
@@ -1800,7 +1969,6 @@
       setTimeout(() => map.resize(), 300);
     });
 
-    // Helper for file download datetimes
     function getFileTimestamp() {
       const now = new Date();
       const yyyy = now.getFullYear();
@@ -1839,17 +2007,14 @@
       const scaleFactor = targetDims.width / mapFrame.clientWidth;
       const bWidth = borderCheckbox.checked ? parseInt(borderWidth.value) * scaleFactor : 0;
 
-      // Outer Border
       ctx.fillStyle = borderColor.value;
       ctx.fillRect(0, 0, targetDims.width, targetDims.height);
 
-      // Filter Preset Mapping
       const presetKey = filterPreset.value;
       const baseFilter = filterPresets[presetKey] || '';
       const contrastSetting = contrastVal.value;
       ctx.filter = `${baseFilter} contrast(${contrastSetting}%)`.trim();
 
-      // Render Map
       const mapCanvas = map.getCanvas();
       ctx.drawImage(
         mapCanvas, 
@@ -1861,7 +2026,6 @@
 
       ctx.filter = 'none';
 
-      // Export Label Styles & Font Selection (Scaled properly relative to preview layout)
       if (labelStyle.value !== 'none') {
         const hex = labelBgColor.value;
         const alpha = labelOpacity.value / 100;
@@ -1871,42 +2035,50 @@
         
         const style = labelStyle.value;
         const fontChoice = labelFontSelect.value;
-
-        // Base proportional factor adjustment to make export fonts/boxes match preview scale perfectly
         const previewRefWidth = mapFrame.clientWidth;
         const proportionalScale = targetDims.width / previewRefWidth;
 
         if (style === 'style-fullwidth') {
-          const bannerHeight = 160 * proportionalScale;
+          const bannerHeight = 180 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(bWidth, bannerY, targetDims.width - (bWidth * 2), bannerHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${42 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, bannerY + (65 * proportionalScale));
+          ctx.font = `800 ${38 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, bannerY + (50 * proportionalScale));
 
-          ctx.font = `600 ${22 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, bannerY + (115 * proportionalScale));
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, bannerY + (95 * proportionalScale));
+
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${22 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, targetDims.width / 2, bannerY + (140 * proportionalScale));
 
         } else if (style === 'style-fullwidth-right') {
-          const bannerHeight = 160 * proportionalScale;
+          const bannerHeight = 180 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(bWidth, bannerY, targetDims.width - (bWidth * 2), bannerHeight);
 
           ctx.textAlign = 'right';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${42 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (65 * proportionalScale));
+          ctx.font = `800 ${38 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (50 * proportionalScale));
 
-          ctx.font = `600 ${22 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (115 * proportionalScale));
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (95 * proportionalScale));
+
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${22 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, targetDims.width - bWidth - (40 * proportionalScale), bannerY + (140 * proportionalScale));
 
         } else if (style === 'style-bottom-right') {
           const boxWidth = 320 * proportionalScale;
-          const boxHeight = 120 * proportionalScale;
+          const boxHeight = 150 * proportionalScale;
           const boxX = targetDims.width - bWidth - boxWidth - (36 * proportionalScale);
           const boxY = targetDims.height - bWidth - boxHeight - (36 * proportionalScale);
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -1914,15 +2086,20 @@
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (50 * proportionalScale));
+          ctx.font = `800 ${30 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (42 * proportionalScale));
 
-          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (90 * proportionalScale));
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (82 * proportionalScale));
+
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, boxX + (boxWidth / 2), boxY + (122 * proportionalScale));
 
         } else if (style === 'style-bottom-right-absolute') {
           const boxWidth = 320 * proportionalScale;
-          const boxHeight = 120 * proportionalScale;
+          const boxHeight = 150 * proportionalScale;
           const boxX = targetDims.width - bWidth - boxWidth;
           const boxY = targetDims.height - bWidth - boxHeight;
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -1930,14 +2107,19 @@
 
           ctx.textAlign = 'right';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (50 * proportionalScale));
+          ctx.font = `800 ${30 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (42 * proportionalScale));
 
-          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (90 * proportionalScale));
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (82 * proportionalScale));
+
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, boxX + boxWidth - (20 * proportionalScale), boxY + (122 * proportionalScale));
 
         } else if (style === 'style-deck') {
-          const bannerHeight = 120 * proportionalScale;
+          const bannerHeight = 130 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight - (30 * proportionalScale);
           const margin = 30 * proportionalScale;
 
@@ -1946,83 +2128,126 @@
 
           ctx.textAlign = 'left';
           ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${36 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, bWidth + margin + (30 * proportionalScale), bannerY + (70 * proportionalScale));
+          ctx.font = `800 ${34 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, bWidth + margin + (30 * proportionalScale), bannerY + (50 * proportionalScale));
+
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, bWidth + margin + (30 * proportionalScale), bannerY + (90 * proportionalScale));
 
           ctx.textAlign = 'right';
-          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width - bWidth - margin - (30 * proportionalScale), bannerY + (70 * proportionalScale));
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${20 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, targetDims.width - bWidth - margin - (30 * proportionalScale), bannerY + (70 * proportionalScale));
 
         } else if (style === 'style-toptag') {
           const boxWidth = 360 * proportionalScale;
-          const boxHeight = 100 * proportionalScale;
-          const boxX = (targetDims.width - boxWidth) / 2;
-          const boxY = bWidth + (50 * proportionalScale);
+          const boxHeight = 120 * proportionalScale;
+          const boxX = (targetDims.width / 2) - (boxWidth / 2);
+          const boxY = bWidth + (40 * proportionalScale);
+          
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+          ctx.beginPath();
+          ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 40 * proportionalScale);
+          ctx.fill();
 
+          ctx.textAlign = 'center';
+          ctx.fillStyle = labelTextColor.value;
+          ctx.font = `800 ${30 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (38 * proportionalScale));
+
+          ctx.fillStyle = labelCoordColor.value;
+          ctx.font = `600 ${15 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (72 * proportionalScale));
+
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${16 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, boxX + (boxWidth / 2), boxY + (102 * proportionalScale));
+
+        } else if (style === 'style-badge') {
+           const boxWidth = 350 * proportionalScale;
+           const boxHeight = 170 * proportionalScale;
+           const boxX = (targetDims.width / 2) - (boxWidth / 2);
+           const boxY = (targetDims.height / 2) - (boxHeight / 2);
+
+           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+           ctx.strokeStyle = labelTextColor.value;
+           ctx.lineWidth = 6 * proportionalScale;
+           
+           ctx.beginPath();
+           ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 15 * proportionalScale);
+           ctx.fill();
+           ctx.stroke();
+
+           ctx.textAlign = 'center';
+           ctx.fillStyle = labelTextColor.value;
+           ctx.font = `800 ${34 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (50 * proportionalScale));
+
+           ctx.fillStyle = labelCoordColor.value;
+           ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (95 * proportionalScale));
+
+           ctx.fillStyle = labelCountryColor.value;
+           ctx.font = `700 ${18 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityCountryEl.textContent, boxX + (boxWidth / 2), boxY + (138 * proportionalScale));
+
+        } else if (style === 'style-minimal') {
+           const boxX = targetDims.width / 2;
+           const boxY = targetDims.height - bWidth - (80 * proportionalScale);
+           
+           ctx.textAlign = 'center';
+           ctx.shadowColor = 'rgba(0,0,0,0.4)';
+           ctx.shadowBlur = 10 * proportionalScale;
+
+           ctx.fillStyle = labelTextColor.value;
+           ctx.font = `800 ${34 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityNameEl.textContent, boxX, boxY);
+
+           ctx.fillStyle = labelCoordColor.value;
+           ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityCoordsEl.textContent, boxX, boxY + (35 * proportionalScale));
+
+           ctx.fillStyle = labelCountryColor.value;
+           ctx.font = `700 ${18 * proportionalScale}px ${fontChoice}`;
+           ctx.fillText(cityCountryEl.textContent, boxX, boxY + (70 * proportionalScale));
+           
+           ctx.shadowColor = 'transparent';
+           ctx.shadowBlur = 0;
+
+        } else if (style === 'style-box') {
+          const boxWidth = 320 * proportionalScale;
+          const boxHeight = 150 * proportionalScale;
+          const boxX = (targetDims.width / 2) - (boxWidth / 2);
+          const boxY = targetDims.height - bWidth - boxHeight - (50 * proportionalScale);
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
           ctx.textAlign = 'center';
           ctx.fillStyle = labelTextColor.value;
           ctx.font = `800 ${30 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (45 * proportionalScale));
+          ctx.fillText(cityNameEl.textContent, boxX + (boxWidth / 2), boxY + (42 * proportionalScale));
 
+          ctx.fillStyle = labelCoordColor.value;
           ctx.font = `600 ${16 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (75 * proportionalScale));
+          ctx.fillText(cityCoordsEl.textContent, boxX + (boxWidth / 2), boxY + (82 * proportionalScale));
 
-        } else if (style === 'style-badge') {
-          const boxWidth = 420 * proportionalScale;
-          const boxHeight = 180 * proportionalScale;
-          const boxX = (targetDims.width - boxWidth) / 2;
-          const boxY = (targetDims.height - boxHeight) / 2;
-
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-          ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-          ctx.strokeStyle = labelTextColor.value;
-          ctx.lineWidth = 4 * proportionalScale;
-          ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-
-          ctx.textAlign = 'center';
-          ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${38 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (75 * proportionalScale));
-
-          ctx.font = `600 ${20 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (125 * proportionalScale));
-
-        } else {
-          // Floating Box & Minimal Mode
-          if (style !== 'style-minimal') {
-            const boxWidth = 320 * proportionalScale;
-            const boxHeight = 120 * proportionalScale;
-            const boxX = (targetDims.width - boxWidth) / 2;
-            const boxY = targetDims.height - bWidth - (160 * proportionalScale);
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-          }
-
-          const boxY = targetDims.height - bWidth - (160 * proportionalScale);
-          ctx.textAlign = 'center';
-          ctx.fillStyle = labelTextColor.value;
-          ctx.font = `800 ${32 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityNameEl.textContent, targetDims.width / 2, boxY + (50 * proportionalScale));
-
-          ctx.font = `600 ${18 * proportionalScale}px ${fontChoice}`;
-          ctx.fillText(cityCoordsEl.textContent, targetDims.width / 2, boxY + (90 * proportionalScale));
+          ctx.fillStyle = labelCountryColor.value;
+          ctx.font = `700 ${18 * proportionalScale}px ${fontChoice}`;
+          ctx.fillText(cityCountryEl.textContent, boxX + (boxWidth / 2), boxY + (122 * proportionalScale));
         }
       }
 
-      // Download Triggers following precise naming formatting rules
-      const fileTimestamp = getFileTimestamp();
-      const cleanLocationName = cityNameEl.textContent.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
-      
-      const link = document.createElement('a');
-      link.download = `MapArtGen_${cleanLocationName}_${fileTimestamp}.png`;
-      link.href = exportCanvas.toDataURL('image/png');
-      link.click();
+      const dataURL = exportCanvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = `MapArtGen_${cityNameEl.textContent.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
+      exportBtn.textContent = 'Export';
       exportBtn.disabled = false;
-      exportBtn.innerHTML = `Export <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
     });
   </script>
 </body>
