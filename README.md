@@ -1,14 +1,5 @@
 # MapArtGen
 
-## Structure
-
-- `src/MapArtGen.html` contains the application markup.
-- `src/MapArtGen.css` contains all presentation styles.
-- `src/js/presets.js` contains the palette catalog and normalized preset data.
-- `src/js/app.js` contains state, map, geocoding, preview, UI, and export behavior.
-- `src/tests/` contains focused Playwright suites for layouts, formats, effects, and interactions.
-
-
 ## About
 MapArtGen is a free Map Art Generator.
 
@@ -21,10 +12,18 @@ Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/img/MapArtGen_Preview.png)
 
 
-## Usage
-- Download the .html file and double-click it
+## Developers
+### Structure
 
-## Browser tests
+- `src/MapArtGen.html` contains the application markup.
+- `src/MapArtGen.css` contains all presentation styles.
+- `src/js/presets.js` contains the palette catalog and normalized preset data.
+- `src/js/app.js` contains state, map, geocoding, preview, UI, and export behavior.
+- `src/tests/` contains focused Playwright suites for layouts, formats, effects, and interactions.
+
+
+
+### Browser tests
 
 The Playwright suite covers every layout, aspect ratio, DPI, output type,
 border state, and names filter.
