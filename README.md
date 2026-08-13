@@ -12,6 +12,11 @@ Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/.github/MapArtGen_Preview.png)
 
 
+## Getting started
+- Download the release from github
+- Extract the archive
+- Doubleclick the .html file
+
 ## Developers
 ### Structure
 
