@@ -11,7 +11,7 @@ Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/.github/MapArtGen_Preview.png)
   
 ## Demo
-You can find a live demo of the latest released version ![here](https://yafp.github.io/MapArtGen/).
+You can find a live demo of the latest released version ![here](https://yafp.github.io/MapArtGen/index.html).
 
 ## Usage
 - Download latest release from https://github.com/yafp?tab=packages&repo_name=MapArtGen
