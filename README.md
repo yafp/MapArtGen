@@ -10,6 +10,9 @@ Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 ## UI
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/.github/MapArtGen_Preview.png)
   
+## Demo
+![Demo](https://yafp.github.io/MapArtGen/index.html)
+
 ## Usage
 - Download latest release from https://github.com/yafp?tab=packages&repo_name=MapArtGen
 - Extract
