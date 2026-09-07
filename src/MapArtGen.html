@@ -7,7 +7,7 @@
   - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 
    Application: MapArtGen
-  Version: 2026.09.07.114400
+  Version: 2026.09.07.202900
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -562,14 +562,21 @@
       <!-- Export Button & Metadata Footer -->
       <div class="sidebar-footer">
         <button type="button" class="export-btn" id="exportBtn" title="Generate and download high-resolution poster image and configuration file">
-          <span id="exportBtnLabel">Export</span>
+          <span id="exportBtnLabel">Export image</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
-        <button type="button" class="secondary-action-btn" id="stlExportBtn" title="Generate an STL terrain model of the visible map area for 3D printing">Export 3D model (STL)</button>
-        <button type="button" class="secondary-action-btn" id="threeMfExportBtn" title="Generate a colored 3MF terrain model using the selected map colors">Export colored 3D model (3MF)</button>
+        <button type="button" class="secondary-action-btn" id="stlExportBtn" title="Generate an STL terrain model of the visible map area for 3D printing">
+			<span id="exportBtnLabel">Export 3D model (.stl)</span>
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+		</button>
+        <button type="button" class="secondary-action-btn" id="threeMfExportBtn" title="Generate a colored 3MF terrain model using the selected map colors">
+			<span id="exportBtnLabel">Export 3D model (.3mf)</span>
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+		</button>
+		
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.09.07.114400</span>
+          <span id="versionLabel">Version 2026.09.07.202900</span>
           <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
