@@ -1,6 +1,6 @@
 const DEFAULTS = Object.freeze({
       preset: 'alpine',
-      labelStyle: 'style-bottom-right-absolute',
+      labelStyle: 'corner-bottom-right',
       labelOpacity: '100',
       textFilter: 'none',
       format: 'a4-portrait',
@@ -9,7 +9,17 @@ const DEFAULTS = Object.freeze({
       filterPreset: 'none',
       contrast: 100,
       brightness: 100,
-      saturation: 100
+      saturation: 100,
+      shape: 'none',
+      shapeColor: '#ffffff',
+      terrainEnabled: false,
+      mountainColor: '#64748b',
+      terrainExaggeration: 100,
+      stlBuildingsEnabled: true,
+      stlRoadsEnabled: true,
+      scaleEnabled: false,
+      northEnabled: false,
+      layerOrder: ['land', 'water', 'forest', 'landCover', 'terrain', 'road', 'boundary', 'building']
     });
     const state = {
       ...DEFAULTS,
@@ -26,6 +36,25 @@ const DEFAULTS = Object.freeze({
       Array.from(document.querySelectorAll('[id]'), element => [element.id, element])
     ));
     const $ = id => controls[id] || null;
+    const MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+    const TERRAIN_SOURCE_ID = 'mapartgen-terrain';
+    const TERRAIN_LAYER_ID = 'mapartgen-hillshade';
+    const TERRAIN_COLOR_SOURCE_ID = 'mapartgen-elevation-colors';
+    const TERRAIN_COLOR_LAYER_ID = 'mapartgen-elevation-colors-layer';
+    const TERRAIN_TILES_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+    const dimsMap = {
+      'a2-portrait': { width: 4961, height: 7016 },
+      'a2-landscape': { width: 7016, height: 4961 },
+      'a3-portrait': { width: 3508, height: 4961 },
+      'a3-landscape': { width: 4961, height: 3508 },
+      'a4-portrait': { width: 2480, height: 3508 },
+      'a4-landscape': { width: 3508, height: 2480 },
+      'a5-portrait': { width: 1748, height: 2480 },
+      'a5-landscape': { width: 2480, height: 1748 },
+      'square-large': { width: 4961, height: 4961 },
+      'square-medium': { width: 3508, height: 3508 },
+      'square-small': { width: 2480, height: 2480 }
+    };
 
     function readControl(id) {
       const control = $(id);
@@ -61,6 +90,15 @@ const DEFAULTS = Object.freeze({
       state.contrast = Number(readControl('contrastVal'));
       state.brightness = Number(readControl('brightnessVal'));
       state.saturation = Number(readControl('saturationVal'));
+      state.shape = readControl('shapeSelect');
+      state.shapeColor = readControl('shapeColor');
+      state.terrainEnabled = readControl('terrainToggle');
+      state.mountainColor = readControl('mountainColor');
+      state.terrainExaggeration = Number(readControl('terrainExaggeration'));
+      state.stlBuildingsEnabled = readControl('stlBuildingsToggle');
+      state.stlRoadsEnabled = readControl('stlRoadsToggle');
+      state.scaleEnabled = readControl('scaleToggle');
+      state.northEnabled = readControl('northToggle');
       state.borderEnabled = readControl('borderCheckbox');
       state.borderColor = readControl('borderColor');
       state.borderWidth = Number(readControl('borderWidth'));
@@ -115,6 +153,16 @@ const DEFAULTS = Object.freeze({
         contrast: Number(readControl('contrastVal')),
         brightness: Number(readControl('brightnessVal')),
         saturation: Number(readControl('saturationVal')),
+        shape: readControl('shapeSelect'),
+        shapeColor: readControl('shapeColor'),
+        terrainEnabled: readControl('terrainToggle'),
+        mountainColor: readControl('mountainColor'),
+        terrainExaggeration: Number(readControl('terrainExaggeration')),
+        stlBuildingsEnabled: readControl('stlBuildingsToggle'),
+        stlRoadsEnabled: readControl('stlRoadsToggle'),
+        scaleEnabled: readControl('scaleToggle'),
+        northEnabled: readControl('northToggle'),
+        layerOrder: [...state.layerOrder],
         borderEnabled: readControl('borderCheckbox'),
         borderColor: readControl('borderColor'),
         borderWidth: Number(readControl('borderWidth')),
@@ -157,6 +205,44 @@ const DEFAULTS = Object.freeze({
       if (render) renderPreview();
     }
 
+    function getTargetDimensions(format = readControl('formatSelect'), dpi = Number(readControl('exportDpi'))) {
+      const baseDims = dimsMap[format];
+      if (!baseDims) throw new Error('Unsupported output format.');
+      const scale = dpi / 300;
+      return {
+        width: Math.round(baseDims.width * scale),
+        height: Math.round(baseDims.height * scale)
+      };
+    }
+
+    function updateOutputDimensions() {
+      const dimensions = getTargetDimensions();
+      $('outputDimensions').textContent = `${dimensions.width} × ${dimensions.height} px`;
+    }
+
+    function relativeLuminance(hex) {
+      const channels = [1, 3, 5].map(index => {
+        const value = parseInt(hex.slice(index, index + 2), 16) / 255;
+        return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    }
+
+    function updateContrastWarning() {
+      const background = relativeLuminance(state.labelBgColor);
+      const ratios = [state.labelTextColor, state.labelCoordColor, state.labelCountryColor].map(color => {
+        const foreground = relativeLuminance(color);
+        return (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
+      });
+      const minimum = Math.min(...ratios);
+      const warning = $('contrastWarning');
+      const passes = minimum >= 4.5 || state.labelStyle === 'none' || state.labelOpacity < 50;
+      warning.textContent = passes
+        ? `Text contrast: ${minimum.toFixed(1)}:1`
+        : `Low text contrast: ${minimum.toFixed(1)}:1 (aim for 4.5:1)`;
+      warning.classList.toggle('good', passes);
+    }
+
     function renderPreview() {
       if (!mapReady) return;
       contrastNum.textContent = state.contrast;
@@ -171,7 +257,7 @@ const DEFAULTS = Object.freeze({
         const hex = state.labelBgColor;
         const alpha = state.labelOpacity / 100;
         const rgb = [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16));
-        mapLabelOverlay.style.backgroundColor = state.labelStyle === 'style-minimal'
+        mapLabelOverlay.style.backgroundColor = state.labelStyle === 'special-minimal'
           ? 'transparent'
           : `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
         cityNameEl.style.color = state.labelTextColor;
@@ -190,15 +276,53 @@ const DEFAULTS = Object.freeze({
       mapFrame.style.border = state.borderEnabled
         ? `${state.borderWidth}px solid ${state.borderColor}`
         : 'none';
+      mapFrame.style.backgroundColor = state.borderEnabled ? state.borderColor : '#ffffff';
       mapFrame.style.borderRadius = `${state.outerBorderRadius}px`;
       mapEl.style.borderRadius = `${state.innerBorderRadius}px`;
       mapFrame.className = `map-frame ratio-${state.format}`;
+      renderShapeMask();
+      renderMapAnnotations();
       applyTextFilters(map, state.textFilter);
+      updateOutputDimensions();
+      updateContrastWarning();
     }
 
     function updateStateFromControls() {
       syncStateFromControls();
       renderPreview();
+    }
+
+    function getShapePath(shape, width, height) {
+      const svgPath = getShapeSvgPath(shape);
+      const path = new Path2D(svgPath);
+      const transform = new DOMMatrix().scale(width / 100, height / 100);
+      return new Path2D(path, transform);
+    }
+
+    function getShapeSvgPath(shape) {
+      if (shape === 'circle') return 'M 50 10 A 40 40 0 1 1 49.99 10 Z';
+      if (shape === 'heart') return 'M 50 88 C 5 58 5 25 27 15 C 40 9 49 20 50 31 C 51 20 60 9 73 15 C 95 25 95 58 50 88 Z';
+      if (shape === 'star') return 'M 50 8 L 61 36 L 91 38 L 68 57 L 76 88 L 50 70 L 24 88 L 32 57 L 9 38 L 39 36 Z';
+      if (shape === 'house') return 'M 10 45 L 50 10 L 90 45 L 82 45 L 82 90 L 60 90 L 60 63 L 40 63 L 40 90 L 18 90 L 18 45 Z';
+      if (shape === 'spiral') return 'M 50 7 C 85 7 94 34 91 55 C 88 81 67 94 43 91 C 18 88 6 68 10 46 C 14 24 33 14 52 17 C 72 20 81 36 78 53 C 75 70 61 78 47 75 C 33 72 27 61 30 49 C 33 37 43 32 53 35 C 63 38 67 46 64 54 C 62 61 56 64 50 62 L 50 49 C 52 51 53 50 53 49 C 53 47 51 46 49 47 C 46 48 45 52 47 55 C 50 59 56 58 59 54 C 63 48 60 41 54 39 C 45 36 37 42 35 51 C 32 63 41 71 51 72 C 66 73 76 61 75 48 C 74 29 58 18 42 20 C 19 23 8 43 13 62 C 19 84 42 94 62 86 C 86 77 96 50 86 28 C 79 13 65 7 50 7 Z';
+      if (shape === 'peace') return 'M 50 8 A 42 42 0 1 1 49.99 8 Z M 44 20 L 56 20 L 56 56 L 79 79 L 70 87 L 50 67 L 30 87 L 21 79 L 44 56 Z';
+      if (shape === 'smiley') return 'M 50 8 A 42 42 0 1 1 49.99 8 Z M 31 32 A 6 6 0 1 1 30.99 32 Z M 69 32 A 6 6 0 1 1 68.99 32 Z M 25 57 C 31 81 69 81 75 57 L 64 57 C 59 68 41 68 36 57 Z';
+      if (shape === 'diamond') return 'M 50 7 L 92 50 L 50 93 L 8 50 Z';
+      if (shape === 'hexagon') return 'M 27 10 L 73 10 L 94 50 L 73 90 L 27 90 L 6 50 Z';
+      if (shape === 'cross') return 'M 35 8 L 65 8 L 65 35 L 92 35 L 92 65 L 65 65 L 65 92 L 35 92 L 35 65 L 8 65 L 8 35 L 35 35 Z';
+      if (shape === 'cloud') return 'M 22 79 C 7 79 4 57 17 50 C 13 31 34 19 48 31 C 57 12 85 21 84 43 C 101 48 96 79 77 79 Z';
+      return '';
+    }
+
+    function renderShapeMask() {
+      const mask = $('shapeMask');
+      if (state.shape === 'none') {
+        mask.style.display = 'none';
+        return;
+      }
+      mask.style.display = 'block';
+      $('shapeCutoutPath').setAttribute('d', getShapeSvgPath(state.shape));
+      $('shapeMaskColor').setAttribute('fill', state.shapeColor);
     }
 
     document.getElementById('settingsForm').addEventListener('input', updateStateFromControls);
@@ -224,6 +348,13 @@ const DEFAULTS = Object.freeze({
       writeControl('contrastVal', DEFAULTS.contrast);
       writeControl('brightnessVal', DEFAULTS.brightness);
       writeControl('saturationVal', DEFAULTS.saturation);
+      writeControl('terrainToggle', DEFAULTS.terrainEnabled);
+      writeControl('mountainColor', DEFAULTS.mountainColor);
+      writeControl('terrainExaggeration', DEFAULTS.terrainExaggeration);
+      writeControl('stlBuildingsToggle', DEFAULTS.stlBuildingsEnabled);
+      writeControl('stlRoadsToggle', DEFAULTS.stlRoadsEnabled);
+      writeControl('scaleToggle', DEFAULTS.scaleEnabled);
+      writeControl('northToggle', DEFAULTS.northEnabled);
       updateBuildingOutlineVisibility();
       updateBorderElementsVisibility();
       updateLabelStyle();
@@ -285,7 +416,7 @@ const DEFAULTS = Object.freeze({
       container: 'map',
       preserveDrawingBuffer: true,
       attributionControl: false,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      style: MAP_STYLE_URL,
       center: [8.69079, 49.40768],
       zoom: 13
     });
@@ -295,11 +426,20 @@ const DEFAULTS = Object.freeze({
       zoomLevelDisplay.textContent = state.zoom.toFixed(2);
     }
     map.on('move', updateZoomLevelDisplay);
+    map.on('move', renderMapAnnotations);
     map.on('zoomend', () => {
       configureBuildingZoom(map);
       triggerAllLayerUpdates();
+      applyTextFilters(map, readControl('textFilter'));
     });
     map.on('moveend', syncStateFromControls);
+    let terrainRefreshTimer;
+    map.on('moveend', () => {
+      clearTimeout(terrainRefreshTimer);
+      terrainRefreshTimer = setTimeout(() => {
+        if (state.terrainEnabled) updateTerrainColorization().catch(error => console.warn('Elevation colors could not be updated:', error));
+      }, 250);
+    });
 
     // 4-Button Zoom Controls Event Listeners (Big steps & Fine adjustments)
     document.getElementById('zoomInBigBtn').addEventListener('click', () => {
@@ -314,6 +454,9 @@ const DEFAULTS = Object.freeze({
     document.getElementById('zoomOutBigBtn').addEventListener('click', () => {
       map.zoomTo(map.getZoom() - 2, { duration: 300 });
     });
+    $('rotateLeftBtn').addEventListener('click', () => map.rotateTo(map.getBearing() - 15, { duration: 200 }));
+    $('rotateRightBtn').addEventListener('click', () => map.rotateTo(map.getBearing() + 15, { duration: 200 }));
+    $('resetBearingBtn').addEventListener('click', () => map.rotateTo(0, { duration: 250 }));
 
     // Live Magnifier Functionality
     const magnifierBtn = document.getElementById('magnifierBtn');
@@ -417,9 +560,12 @@ const DEFAULTS = Object.freeze({
     // Map Labels Filter
     const textFilter = document.getElementById('textFilter');
     const LABEL_LAYER_GROUPS = Object.freeze({
-      water: ['waterway_label', 'water_name', 'marine_label'],
-      cities: ['place_', 'city', 'town', 'village', 'country_label', 'state_label'],
-      streets: ['roadname', 'road_label', 'street', 'transportation_name', 'transport']
+      water: ['waterway_label', 'water_name', 'marine_label', 'ocean', 'sea', 'lake', 'river', 'canal', 'stream'],
+      cities: ['place_', 'city', 'town', 'village', 'hamlet', 'suburb', 'neighbourhood', 'country_label', 'state_label', 'province'],
+      streets: ['roadname', 'road_label', 'street', 'highway', 'motorway', 'path_label'],
+      transit: ['transportation_name', 'transit', 'station', 'rail', 'airport', 'aerodrome', 'ferry'],
+      poi: ['poi', 'housenumber', 'building_label', 'amenity', 'shop', 'tourism'],
+      natural: ['natural', 'mountain', 'peak', 'volcano', 'glacier', 'forest_label', 'park_label']
     });
 
     function getLabelRole(layer) {
@@ -439,6 +585,9 @@ const DEFAULTS = Object.freeze({
       if (mode === 'cities_only') return role === 'cities';
       if (mode === 'streets_only') return role === 'streets';
       if (mode === 'water_only') return role === 'water';
+      if (mode === 'transit_only') return role === 'transit';
+      if (mode === 'poi_only') return role === 'poi';
+      if (mode === 'natural_only') return role === 'natural';
       return false;
     }
 
@@ -447,7 +596,9 @@ const DEFAULTS = Object.freeze({
       if (!style || !style.layers) return;
 
       style.layers.forEach(layer => {
-        if (layer.type === 'symbol' && layer.layout?.['text-field']) {
+        if (layer.type === 'symbol') {
+          const liveTextField = targetMap.getLayoutProperty(layer.id, 'text-field');
+          if (liveTextField == null && layer.layout?.['text-field'] == null) return;
           targetMap.setLayoutProperty(
             layer.id,
             'visibility',
@@ -482,6 +633,132 @@ const DEFAULTS = Object.freeze({
         }
       }
       return null;
+    }
+
+    function shadeHex(hex, amount) {
+      const channel = index => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(index, index + 2), 16) + amount)));
+      return `rgb(${channel(1)}, ${channel(3)}, ${channel(5)})`;
+    }
+
+    function configureTerrain(targetMap, terrainState = state) {
+      if (!targetMap.getSource(TERRAIN_SOURCE_ID)) {
+        targetMap.addSource(TERRAIN_SOURCE_ID, {
+          type: 'raster-dem',
+          tiles: [TERRAIN_TILES_URL],
+          tileSize: 256,
+          encoding: 'terrarium',
+          maxzoom: 15
+        });
+      }
+      if (!targetMap.getLayer(TERRAIN_LAYER_ID)) {
+        const firstLabel = targetMap.getStyle().layers.find(layer => layer.type === 'symbol')?.id;
+        targetMap.addLayer({
+          id: TERRAIN_LAYER_ID,
+          type: 'hillshade',
+          source: TERRAIN_SOURCE_ID,
+          paint: {
+            'hillshade-exaggeration': 0,
+            'hillshade-highlight-color': shadeHex(terrainState.mountainColor, 80),
+            'hillshade-shadow-color': shadeHex(terrainState.mountainColor, -80),
+            'hillshade-accent-color': terrainState.mountainColor
+          }
+        }, firstLabel);
+      }
+      targetMap.setPaintProperty(TERRAIN_LAYER_ID, 'hillshade-highlight-color', shadeHex(terrainState.mountainColor, 80));
+      targetMap.setPaintProperty(TERRAIN_LAYER_ID, 'hillshade-shadow-color', shadeHex(terrainState.mountainColor, -80));
+      targetMap.setPaintProperty(TERRAIN_LAYER_ID, 'hillshade-accent-color', terrainState.mountainColor);
+      targetMap.setPaintProperty(TERRAIN_LAYER_ID, 'hillshade-exaggeration', terrainState.terrainEnabled ? terrainState.terrainExaggeration / 180 : 0);
+    }
+
+    async function updateTerrainColorization(targetMap = map, terrainState = state) {
+      if (!terrainState.terrainEnabled) {
+        if (targetMap.getLayer(TERRAIN_COLOR_LAYER_ID)) targetMap.setPaintProperty(TERRAIN_COLOR_LAYER_ID, 'raster-opacity', 0);
+        return;
+      }
+      const grid = await getElevationGrid(targetMap.getBounds(), 81, Math.min(13, Math.max(10, Math.floor(targetMap.getZoom()))));
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = grid.size;
+      const context = canvas.getContext('2d');
+      const image = context.createImageData(grid.size, grid.size);
+      const minimum = Math.min(...grid.heights);
+      const maximum = Math.max(...grid.heights);
+      grid.heights.forEach((height, index) => {
+        const ratio = (height - minimum) / Math.max(1, maximum - minimum);
+        const color = shadeHex(terrainState.mountainColor, -100 + ratio * 190).match(/\d+/g).map(Number);
+        image.data[index * 4] = color[0]; image.data[index * 4 + 1] = color[1]; image.data[index * 4 + 2] = color[2]; image.data[index * 4 + 3] = 185;
+      });
+      context.putImageData(image, 0, 0);
+      const bounds = targetMap.getBounds();
+      const coordinates = [[bounds.getWest(), bounds.getNorth()], [bounds.getEast(), bounds.getNorth()], [bounds.getEast(), bounds.getSouth()], [bounds.getWest(), bounds.getSouth()]];
+      if (targetMap.getLayer(TERRAIN_COLOR_LAYER_ID)) targetMap.removeLayer(TERRAIN_COLOR_LAYER_ID);
+      if (targetMap.getSource(TERRAIN_COLOR_SOURCE_ID)) targetMap.removeSource(TERRAIN_COLOR_SOURCE_ID);
+      targetMap.addSource(TERRAIN_COLOR_SOURCE_ID, { type: 'canvas', canvas, coordinates, animate: false });
+      targetMap.addLayer({ id: TERRAIN_COLOR_LAYER_ID, type: 'raster', source: TERRAIN_COLOR_SOURCE_ID, paint: { 'raster-opacity': 0.72 } }, TERRAIN_LAYER_ID);
+      applyLayerOrder(targetMap, terrainState.layerOrder);
+    }
+
+    const LAYER_ORDER_LABELS = Object.freeze({ land: 'Land', terrain: 'Terrain', water: 'Water', forest: 'Nature', landCover: 'Urban', road: 'Roads', boundary: 'Borders', building: 'Buildings' });
+    function applyLayerOrder(targetMap = map, order = state.layerOrder) {
+      const layers = targetMap.getStyle()?.layers || [];
+      const beforeId = layers.find(layer => layer.type === 'symbol')?.id;
+      order.forEach(role => {
+        const matchingIds = role === 'terrain'
+          ? [TERRAIN_COLOR_LAYER_ID, TERRAIN_LAYER_ID]
+          : layers.filter(layer => getLayerRole(layer) === role).map(layer => layer.id);
+        matchingIds.forEach(id => {
+          if (targetMap.getLayer(id)) targetMap.moveLayer(id, beforeId);
+        });
+      });
+    }
+
+    function renderLayerOrderControls() {
+      const list = $('layerOrderList');
+      list.replaceChildren();
+      state.layerOrder.forEach((role, index) => {
+        const item = document.createElement('div');
+        item.className = 'layer-order-item';
+        const label = document.createElement('span');
+        label.textContent = LAYER_ORDER_LABELS[role];
+        const up = document.createElement('button');
+        up.type = 'button'; up.textContent = 'Up'; up.title = `Move ${label.textContent} earlier`; up.disabled = index === 0;
+        const down = document.createElement('button');
+        down.type = 'button'; down.textContent = 'Down'; down.title = `Move ${label.textContent} later`; down.disabled = index === state.layerOrder.length - 1;
+        up.addEventListener('click', () => moveLayerOrder(index, -1));
+        down.addEventListener('click', () => moveLayerOrder(index, 1));
+        item.append(label, up, down);
+        list.appendChild(item);
+      });
+    }
+
+    function moveLayerOrder(index, direction) {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= state.layerOrder.length) return;
+      [state.layerOrder[index], state.layerOrder[nextIndex]] = [state.layerOrder[nextIndex], state.layerOrder[index]];
+      applyLayerOrder();
+      renderLayerOrderControls();
+    }
+
+    function getScaleInfo(targetMap = map) {
+      const metersPerPixel = (40075016.686 * Math.cos(targetMap.getCenter().lat * Math.PI / 180)) / (512 * 2 ** targetMap.getZoom());
+      const targetMeters = metersPerPixel * targetMap.getContainer().clientWidth * 0.2;
+      const exponent = 10 ** Math.floor(Math.log10(targetMeters));
+      const base = [1, 2, 5, 10].find(value => value * exponent >= targetMeters) || 10;
+      const meters = base * exponent;
+      return { meters, pixels: meters / metersPerPixel, label: meters >= 1000 ? `${meters / 1000} km` : `${Math.round(meters)} m` };
+    }
+
+    function renderMapAnnotations() {
+      if (!mapReady) return;
+      const scale = $('mapScaleOverlay');
+      const north = $('northOverlay');
+      scale.style.display = state.scaleEnabled ? 'block' : 'none';
+      north.style.display = state.northEnabled ? 'block' : 'none';
+      if (state.scaleEnabled) {
+        const info = getScaleInfo();
+        scale.style.width = `${info.pixels}px`;
+        scale.firstElementChild.textContent = info.label;
+      }
+      if (state.northEnabled) north.style.transform = `rotate(${-map.getBearing()}deg)`;
     }
 
     function warnAboutUnsupportedLayers(targetMap) {
@@ -547,7 +824,7 @@ const DEFAULTS = Object.freeze({
       updateCallbacks.push(update);
     }
 
-    // Pre-defined color set definitions
+    // Predefined color set definitions
     const colorPresetSelect = controls.colorPresetSelect;
     const predefinedColorSets = window.MapArtGenPresets;
     window.MapArtGenPresetCatalog.forEach((preset, index) => {
@@ -570,11 +847,21 @@ const DEFAULTS = Object.freeze({
       updateBuildingOutlineVisibility();
       triggerAllLayerUpdates();
       syncStateFromControls();
+      applyTextFilters(map, state.textFilter);
     }
 
     colorPresetSelect.addEventListener('change', (e) => {
       applyColorPreset(e.target.value);
     });
+
+    function stepPreset(offset) {
+      const count = colorPresetSelect.options.length;
+      const current = Math.max(0, colorPresetSelect.selectedIndex);
+      colorPresetSelect.selectedIndex = (current + offset + count) % count;
+      applyColorPreset(colorPresetSelect.value);
+    }
+    $('previousPresetBtn').addEventListener('click', () => stepPreset(-1));
+    $('nextPresetBtn').addEventListener('click', () => stepPreset(1));
 
     $('randomPresetBtn').addEventListener('click', () => {
       const randomHex = () => `#${Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, '0')}`;
@@ -686,7 +973,10 @@ const DEFAULTS = Object.freeze({
 
     map.on('load', () => {
       mapReady = true;
+      configureTerrain(map);
+      updateTerrainColorization(map).catch(error => console.warn('Elevation colors could not be loaded:', error));
       configureBuildingZoom(map);
+      enhancePreviewDetail(map);
       applyTextFilters();
 
       setupLayerControls('waterColor', null, 'waterOpacity', 'waterOpacityVal', 'waterToggle', 'water');
@@ -700,9 +990,23 @@ const DEFAULTS = Object.freeze({
       applyColorPreset(DEFAULTS.preset);
       configureBuildingZoom(map);
       triggerAllLayerUpdates();
+      applyTextFilters(map, readControl('textFilter'));
       updateLabelStyle();
       warnAboutUnsupportedLayers(map);
+      applyLayerOrder();
+      renderLayerOrderControls();
     });
+
+    ['terrainToggle', 'mountainColor', 'terrainExaggeration'].forEach(id => $(id).addEventListener('input', () => {
+      syncStateFromControls();
+      $('terrainExaggerationVal').textContent = state.terrainExaggeration;
+      configureTerrain(map);
+      updateTerrainColorization().catch(error => console.warn('Elevation colors could not be updated:', error));
+    }));
+    ['scaleToggle', 'northToggle'].forEach(id => $(id).addEventListener('change', () => {
+      syncStateFromControls();
+      renderMapAnnotations();
+    }));
 
     // Search and reverse geocoding via Nominatim
     const searchInput = document.getElementById('searchInput');
@@ -958,6 +1262,7 @@ const DEFAULTS = Object.freeze({
       setState({ format: readControl('formatSelect') });
       setTimeout(() => map.resize(), 300);
     });
+    $('exportDpi').addEventListener('change', updateOutputDimensions);
     function getFileTimestamp() {
       const now = new Date();
       const yyyy = now.getFullYear();
@@ -971,19 +1276,303 @@ const DEFAULTS = Object.freeze({
 
     // High-Res Export Engine & Download Handlers
     const exportBtn = document.getElementById('exportBtn');
-    const dimsMap = {
-      'a2-portrait': { width: 4961, height: 7016 },
-      'a2-landscape': { width: 7016, height: 4961 },
-      'a3-portrait': { width: 3508, height: 4961 },
-      'a3-landscape': { width: 4961, height: 3508 },
-      'a4-portrait': { width: 2480, height: 3508 },
-      'a4-landscape': { width: 3508, height: 2480 },
-      'a5-portrait': { width: 1748, height: 2480 },
-      'a5-landscape': { width: 2480, height: 1748 },
-      'square-large': { width: 4961, height: 4961 },
-      'square-medium': { width: 3508, height: 3508 },
-      'square-small': { width: 2480, height: 2480 }
-    };
+    let exportWorker = null;
+    try {
+      exportWorker = new Worker('js/export-worker.js');
+    } catch (error) {
+      console.warn('Export worker unavailable; PDF export will use the main thread.', error);
+    }
+    let exportWorkerRequest = 0;
+    const exportWorkerPending = new Map();
+    if (exportWorker) {
+      exportWorker.onmessage = event => {
+        const pending = exportWorkerPending.get(event.data.id);
+        if (!pending) return;
+        exportWorkerPending.delete(event.data.id);
+        if (event.data.error) pending.reject(new Error(event.data.error));
+        else pending.resolve(event.data);
+      };
+    }
+
+    function processExportInWorker(action, payload) {
+      if (!exportWorker) return Promise.reject(new Error('Export worker is unavailable.'));
+      const id = ++exportWorkerRequest;
+      return new Promise((resolve, reject) => {
+        exportWorkerPending.set(id, { resolve, reject });
+        exportWorker.postMessage({ id, action, ...payload });
+      });
+    }
+    function downloadBlob(blob, filename) {
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    }
+
+    function lngLatToTile(lng, lat, zoom) {
+      const latitude = Math.max(-85.05112878, Math.min(85.05112878, lat));
+      const scale = 2 ** zoom;
+      return {
+        x: ((lng + 180) / 360) * scale,
+        y: (1 - Math.asinh(Math.tan(latitude * Math.PI / 180)) / Math.PI) / 2 * scale
+      };
+    }
+
+    async function getElevationGrid(bounds, size = 65, zoom = 12) {
+      const tileCache = new Map();
+      async function loadTile(tileX, tileY) {
+        const scale = 2 ** zoom;
+        const wrappedX = ((tileX % scale) + scale) % scale;
+        const key = `${wrappedX}/${tileY}`;
+        if (!tileCache.has(key)) tileCache.set(key, (async () => {
+          const response = await fetch(TERRAIN_TILES_URL.replace('{z}', zoom).replace('{x}', wrappedX).replace('{y}', tileY));
+          if (!response.ok) throw new Error('Elevation data is unavailable for this location.');
+          const bitmap = await createImageBitmap(await response.blob());
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 256;
+          const context = canvas.getContext('2d', { willReadFrequently: true });
+          context.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          return context.getImageData(0, 0, 256, 256).data;
+        })());
+        return tileCache.get(key);
+      }
+      const heights = await Promise.all(Array.from({ length: size * size }, async (_, index) => {
+        const row = Math.floor(index / size);
+        const column = index % size;
+        const lng = bounds.getWest() + (bounds.getEast() - bounds.getWest()) * (column / (size - 1));
+        const lat = bounds.getNorth() + (bounds.getSouth() - bounds.getNorth()) * (row / (size - 1));
+        const position = lngLatToTile(lng, lat, zoom);
+        const tileX = Math.floor(position.x);
+        const tileY = Math.floor(position.y);
+        const pixels = await loadTile(tileX, tileY);
+        const pixelX = Math.max(0, Math.min(255, Math.floor((position.x - tileX) * 256)));
+        const pixelY = Math.max(0, Math.min(255, Math.floor((position.y - tileY) * 256)));
+        const offset = (pixelY * 256 + pixelX) * 4;
+        return pixels[offset] * 256 + pixels[offset + 1] + pixels[offset + 2] / 256 - 32768;
+      }));
+      return { heights, size };
+    }
+
+    function createTerrainMesh(heights, size, bounds, exaggeration, cityFeatures = {}) {
+      const latitude = (bounds.getNorth() + bounds.getSouth()) / 2;
+      const widthMeters = (bounds.getEast() - bounds.getWest()) * 111320 * Math.cos(latitude * Math.PI / 180);
+      const depthMeters = (bounds.getNorth() - bounds.getSouth()) * 110540;
+      const widthMm = 160;
+      const depthMm = Math.max(20, widthMm * depthMeters / Math.max(widthMeters, 1));
+      const minimum = Math.min(...heights);
+      const maximum = Math.max(...heights);
+      const reliefMm = Math.min(50, 16 * exaggeration / 100);
+      const heightAt = index => 2 + ((heights[index] - minimum) / Math.max(maximum - minimum, 1)) * reliefMm;
+      const vertexAt = (row, column, base = false) => [column * widthMm / (size - 1), row * depthMm / (size - 1), base ? 0 : heightAt(row * size + column)];
+      const triangles = [];
+      const triangleMaterials = [];
+      const add = (a, b, c, material = 'terrain') => { triangles.push(a, b, c); triangleMaterials.push(material); };
+      const terrainHeightAt = (x, y) => {
+        const column = Math.max(0, Math.min(size - 1, Math.round(x / widthMm * (size - 1))));
+        const row = Math.max(0, Math.min(size - 1, Math.round(y / depthMm * (size - 1))));
+        return heightAt(row * size + column);
+      };
+      const pointFromCoordinate = coordinate => {
+        const [lng, lat] = coordinate;
+        if (!Number.isFinite(lng) || !Number.isFinite(lat) || lng < bounds.getWest() || lng > bounds.getEast() || lat < bounds.getSouth() || lat > bounds.getNorth()) return null;
+        return [
+          (lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * widthMm,
+          (bounds.getNorth() - lat) / (bounds.getNorth() - bounds.getSouth()) * depthMm
+        ];
+      };
+      const addBuilding = ring => {
+        const points = ring.map(pointFromCoordinate);
+        if (points.some(point => !point)) return;
+        if (points.length < 4) return;
+        const top = points.slice(0, -1).map(([x, y]) => [x, y, terrainHeightAt(x, y) + 4]);
+        if (top.length < 3) return;
+        for (let index = 1; index < top.length - 1; index += 1) add(top[0], top[index], top[index + 1], 'building');
+        top.forEach((point, index) => {
+          const next = top[(index + 1) % top.length];
+          const base = [point[0], point[1], terrainHeightAt(point[0], point[1])];
+          const nextBase = [next[0], next[1], terrainHeightAt(next[0], next[1])];
+          add(point, next, base, 'building'); add(next, nextBase, base, 'building');
+        });
+      };
+      const addSurface = (ring, material, height) => {
+        const points = ring.map(pointFromCoordinate);
+        if (points.some(point => !point) || points.length < 4) return;
+        const top = points.slice(0, -1).map(([x, y]) => [x, y, terrainHeightAt(x, y) + height]);
+        if (top.length < 3) return;
+        for (let index = 1; index < top.length - 1; index += 1) add(top[0], top[index], top[index + 1], material);
+        top.forEach((point, index) => {
+          const next = top[(index + 1) % top.length];
+          const base = [point[0], point[1], terrainHeightAt(point[0], point[1])];
+          const nextBase = [next[0], next[1], terrainHeightAt(next[0], next[1])];
+          add(point, next, base, material); add(next, nextBase, base, material);
+        });
+      };
+      const addPathSegment = (start, end, material, height, halfWidth) => {
+        const a = pointFromCoordinate(start), b = pointFromCoordinate(end);
+        if (!a || !b) return;
+        const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (length < 0.1) return;
+        const offsetX = -(b[1] - a[1]) / length * halfWidth, offsetY = (b[0] - a[0]) / length * halfWidth;
+        const lower = [[a[0] + offsetX, a[1] + offsetY], [a[0] - offsetX, a[1] - offsetY], [b[0] - offsetX, b[1] - offsetY], [b[0] + offsetX, b[1] + offsetY]];
+        const bottom = lower.map(([x, y]) => [x, y, terrainHeightAt(x, y)]);
+        const top = lower.map(([x, y]) => [x, y, terrainHeightAt(x, y) + height]);
+        add(top[0], top[1], top[2], material); add(top[0], top[2], top[3], material);
+        for (let index = 0; index < 4; index += 1) { const next = (index + 1) % 4; add(top[index], top[next], bottom[index], material); add(top[next], bottom[next], bottom[index], material); }
+      };
+      for (let row = 0; row < size - 1; row += 1) for (let column = 0; column < size - 1; column += 1) {
+        const topLeft = vertexAt(row, column), topRight = vertexAt(row, column + 1), bottomLeft = vertexAt(row + 1, column), bottomRight = vertexAt(row + 1, column + 1);
+        add(topLeft, bottomLeft, topRight); add(topRight, bottomLeft, bottomRight);
+        const baseTopLeft = vertexAt(row, column, true), baseTopRight = vertexAt(row, column + 1, true), baseBottomLeft = vertexAt(row + 1, column, true), baseBottomRight = vertexAt(row + 1, column + 1, true);
+        add(baseTopRight, baseBottomLeft, baseTopLeft); add(baseBottomRight, baseBottomLeft, baseTopRight);
+      }
+      for (let index = 0; index < size - 1; index += 1) {
+        [[vertexAt(0, index), vertexAt(0, index + 1), vertexAt(0, index + 1, true), vertexAt(0, index, true)], [vertexAt(size - 1, index + 1), vertexAt(size - 1, index), vertexAt(size - 1, index, true), vertexAt(size - 1, index + 1, true)], [vertexAt(index + 1, 0), vertexAt(index, 0), vertexAt(index, 0, true), vertexAt(index + 1, 0, true)], [vertexAt(index, size - 1), vertexAt(index + 1, size - 1), vertexAt(index + 1, size - 1, true), vertexAt(index, size - 1, true)]].forEach(([a, b, c, d]) => { add(a, b, c); add(a, c, d); });
+      }
+      cityFeatures.buildings?.forEach(feature => {
+        const coordinates = feature.geometry?.coordinates;
+        if (feature.geometry?.type === 'Polygon') addBuilding(coordinates[0]);
+        if (feature.geometry?.type === 'MultiPolygon') coordinates.forEach(polygon => addBuilding(polygon[0]));
+      });
+      cityFeatures.roads?.forEach(feature => {
+        const lines = feature.geometry?.type === 'LineString' ? [feature.geometry.coordinates] : feature.geometry?.type === 'MultiLineString' ? feature.geometry.coordinates : [];
+        lines.forEach(line => line.slice(1).forEach((point, index) => addPathSegment(line[index], point, 'road', 0.9, 0.3)));
+        if (feature.geometry?.type === 'Polygon') addSurface(feature.geometry.coordinates[0], 'road', 0.9);
+        if (feature.geometry?.type === 'MultiPolygon') feature.geometry.coordinates.forEach(polygon => addSurface(polygon[0], 'road', 0.9));
+      });
+      cityFeatures.water?.forEach(feature => {
+        const coordinates = feature.geometry?.coordinates;
+        if (feature.geometry?.type === 'Polygon') addSurface(coordinates[0], 'water', 0.35);
+        if (feature.geometry?.type === 'MultiPolygon') coordinates.forEach(polygon => addSurface(polygon[0], 'water', 0.35));
+        const lines = feature.geometry?.type === 'LineString' ? [coordinates] : feature.geometry?.type === 'MultiLineString' ? coordinates : [];
+        lines.forEach(line => line.slice(1).forEach((point, index) => addPathSegment(line[index], point, 'water', 0.45, 0.45)));
+      });
+      return { triangles, triangleMaterials };
+    }
+
+    function createTerrainStl(mesh) {
+      const triangleCount = mesh.triangles.length / 3;
+      const buffer = new ArrayBuffer(84 + triangleCount * 50);
+      const view = new DataView(buffer);
+      view.setUint32(80, triangleCount, true);
+      let offset = 84;
+      for (let index = 0; index < mesh.triangles.length; index += 3) {
+        offset += 12;
+        mesh.triangles.slice(index, index + 3).forEach(vertex => {
+          view.setFloat32(offset, vertex[0], true); view.setFloat32(offset + 4, vertex[1], true); view.setFloat32(offset + 8, vertex[2], true); offset += 12;
+        });
+        view.setUint16(offset, 0, true); offset += 2;
+      }
+      return new Blob([buffer], { type: 'model/stl' });
+    }
+
+    function rotateMeshToMapBearing(mesh, bearing) {
+      if (!bearing) return mesh;
+      const bounds = mesh.triangles.reduce((result, vertex) => ({
+        minX: Math.min(result.minX, vertex[0]), maxX: Math.max(result.maxX, vertex[0]),
+        minY: Math.min(result.minY, vertex[1]), maxY: Math.max(result.maxY, vertex[1])
+      }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+      const centerX = (bounds.minX + bounds.maxX) / 2;
+      const centerY = (bounds.minY + bounds.maxY) / 2;
+      const angle = bearing * Math.PI / 180;
+      const cosine = Math.cos(angle);
+      const sine = Math.sin(angle);
+      return {
+        ...mesh,
+        triangles: mesh.triangles.map(([x, y, z]) => [
+          centerX + (x - centerX) * cosine - (y - centerY) * sine,
+          centerY + (x - centerX) * sine + (y - centerY) * cosine,
+          z
+        ])
+      };
+    }
+
+    function crc32(bytes) {
+      let value = 0xffffffff;
+      for (const byte of bytes) {
+        value ^= byte;
+        for (let bit = 0; bit < 8; bit += 1) value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
+      }
+      return (value ^ 0xffffffff) >>> 0;
+    }
+
+    function createStoredZip(files) {
+      const encoder = new TextEncoder();
+      const entries = files.map(({ name, content }) => ({ name: encoder.encode(name), content: typeof content === 'string' ? encoder.encode(content) : content }));
+      let offset = 0;
+      const parts = [];
+      const directory = [];
+      const pushUint16 = (view, offsetValue, value) => view.setUint16(offsetValue, value, true);
+      const pushUint32 = (view, offsetValue, value) => view.setUint32(offsetValue, value, true);
+      entries.forEach(entry => {
+        const crc = crc32(entry.content), header = new Uint8Array(30 + entry.name.length), view = new DataView(header.buffer);
+        pushUint32(view, 0, 0x04034b50); pushUint16(view, 4, 20); pushUint16(view, 6, 0x0800); pushUint16(view, 8, 0); pushUint32(view, 14, crc); pushUint32(view, 18, entry.content.length); pushUint32(view, 22, entry.content.length); pushUint16(view, 26, entry.name.length); entry.setName = offset;
+        header.set(entry.name, 30); parts.push(header, entry.content); offset += header.length + entry.content.length;
+        directory.push({ ...entry, crc, offset: entry.setName });
+      });
+      const directoryOffset = offset;
+      directory.forEach(entry => {
+        const header = new Uint8Array(46 + entry.name.length), view = new DataView(header.buffer);
+        pushUint32(view, 0, 0x02014b50); pushUint16(view, 4, 20); pushUint16(view, 6, 20); pushUint16(view, 8, 0x0800); pushUint16(view, 10, 0); pushUint32(view, 16, entry.crc); pushUint32(view, 20, entry.content.length); pushUint32(view, 24, entry.content.length); pushUint16(view, 28, entry.name.length); pushUint32(view, 42, entry.offset); header.set(entry.name, 46); parts.push(header); offset += header.length;
+      });
+      const footer = new Uint8Array(22), footerView = new DataView(footer.buffer);
+      pushUint32(footerView, 0, 0x06054b50); pushUint16(footerView, 8, entries.length); pushUint16(footerView, 10, entries.length); pushUint32(footerView, 12, offset - directoryOffset); pushUint32(footerView, 16, directoryOffset); parts.push(footer);
+      return new Blob(parts, { type: 'model/3mf' });
+    }
+
+    function createColoredThreeMf(mesh, colors) {
+      const materialIndex = { terrain: 0, building: 1, road: 2, water: 3 };
+      const color = hex => `${hex.toUpperCase()}FF`;
+      const vertices = mesh.triangles.map(vertex => `<vertex x="${vertex[0]}" y="${vertex[1]}" z="${vertex[2]}"/>`).join('');
+      const triangles = mesh.triangleMaterials.map((material, index) => `<triangle v1="${index * 3}" v2="${index * 3 + 1}" v3="${index * 3 + 2}" pid="1" p1="${materialIndex[material]}"/>`).join('');
+      const model = `<?xml version="1.0" encoding="UTF-8"?><model xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" unit="millimeter" xml:lang="en-US"><resources><basematerials id="1"><base name="Terrain" displaycolor="${color(colors.terrain)}"/><base name="Buildings" displaycolor="${color(colors.building)}"/><base name="Streets" displaycolor="${color(colors.road)}"/><base name="Water" displaycolor="${color(colors.water)}"/></basematerials><object id="2" type="model" pid="1" pindex="0"><mesh><vertices>${vertices}</vertices><triangles>${triangles}</triangles></mesh></object></resources><build><item objectid="2"/></build></model>`;
+      return createStoredZip([
+        { name: '[Content_Types].xml', content: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>' },
+        { name: '_rels/.rels', content: '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>' },
+        { name: '3D/3dmodel.model', content: model }
+      ]);
+    }
+
+    function drawExportAnnotations(context, exportState, width, height, mapWidth, borderWidth) {
+      context.save();
+      context.fillStyle = '#111827';
+      context.strokeStyle = '#111827';
+      context.lineWidth = Math.max(2, width / 900);
+      context.font = `800 ${Math.max(14, width / 115)}px sans-serif`;
+      if (exportState.scaleEnabled) {
+        const previewInfo = getScaleInfo(map);
+        const scaleWidth = previewInfo.pixels * (mapWidth / map.getContainer().clientWidth);
+        const x = borderWidth + width * 0.025, y = height - borderWidth - width * 0.035;
+        context.textAlign = 'center'; context.fillText(previewInfo.label, x + scaleWidth / 2, y - 8);
+        context.beginPath(); context.moveTo(x, y); context.lineTo(x + scaleWidth, y); context.moveTo(x, y - 6); context.lineTo(x, y + 6); context.moveTo(x + scaleWidth, y - 6); context.lineTo(x + scaleWidth, y + 6); context.stroke();
+      }
+      if (exportState.northEnabled) {
+        const x = borderWidth + width * 0.045, y = borderWidth + width * 0.055;
+        context.translate(x, y); context.rotate(-exportState.bearing * Math.PI / 180); context.textAlign = 'center'; context.fillText('N', 0, -12); context.beginPath(); context.moveTo(0, -8); context.lineTo(-7, 13); context.lineTo(0, 8); context.lineTo(7, 13); context.closePath(); context.fill();
+      }
+      context.restore();
+    }
+
+    function canvasToSvg(canvas, exportState) {
+      const dataUrl = canvas.toDataURL('image/png');
+      const escape = value => String(value).replace(/[&<>"]/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+      })[character]);
+      const textX = canvas.width / 2;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">
+  <title>${exportState.city} map poster</title>
+  <image width="100%" height="100%" href="${dataUrl}"/>
+  <g text-anchor="middle" font-family="sans-serif">
+    <text x="${textX}" y="${canvas.height - 105}" font-size="34" font-weight="800" fill="${exportState.labelTextColor}">${escape(exportState.city)}</text>
+    <text x="${textX}" y="${canvas.height - 65}" font-size="16" font-weight="600" fill="${exportState.labelCoordColor}">${escape(exportState.coordinates)}</text>
+    <text x="${textX}" y="${canvas.height - 30}" font-size="18" font-weight="700" fill="${exportState.labelCountryColor}">${escape(exportState.country)}</text>
+  </g>
+</svg>`;
+    }
 
     function waitForMapIdle(targetMap, timeoutMs = 30000) {
       return new Promise((resolve, reject) => {
@@ -1032,11 +1621,16 @@ const DEFAULTS = Object.freeze({
       style.layers.forEach(layer => {
         if (getLayerRole(layer) === 'building') {
           targetMap.setLayerZoomRange(layer.id, 0, 24);
+          targetMap.setLayoutProperty(layer.id, 'visibility', state.layers.buildingToggle === false ? 'none' : 'visible');
           if (layer.type === 'fill') {
             targetMap.setPaintProperty(layer.id, 'fill-opacity', 1);
           }
         }
       });
+    }
+
+    function enhancePreviewDetail(targetMap) {
+      configureBuildingZoom(targetMap);
     }
 
 
@@ -1051,7 +1645,7 @@ const DEFAULTS = Object.freeze({
         preserveDrawingBuffer: true,
         attributionControl: false,
         interactive: false,
-        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        style: MAP_STYLE_URL,
         bearing: exportState.bearing,
         pitch: exportState.pitch
       });
@@ -1059,8 +1653,10 @@ const DEFAULTS = Object.freeze({
         exportMap.once('load', resolve);
         exportMap.once('error', event => reject(event.error || new Error('Export map failed to load.')));
       });
+      configureTerrain(exportMap, exportState);
       configureBuildingZoom(exportMap);
       applyStateToMap(exportMap, exportState);
+      applyLayerOrder(exportMap, exportState.layerOrder);
       exportMap.resize();
       const bounds = new maplibregl.LngLatBounds(exportState.bounds[0], exportState.bounds[1]);
       exportMap.fitBounds(bounds, {
@@ -1069,6 +1665,7 @@ const DEFAULTS = Object.freeze({
         pitch: exportState.pitch,
         duration: 0
       });
+      await updateTerrainColorization(exportMap, exportState);
       const previewAspect = exportState.previewMapSize.width / exportState.previewMapSize.height;
       const exportAspect = width / height;
       if (Math.abs(previewAspect - exportAspect) > 0.001) {
@@ -1081,7 +1678,7 @@ const DEFAULTS = Object.freeze({
     exportBtn.addEventListener('click', async () => {
       exportBtn.disabled = true;
       exportBtnLabel.textContent = 'Exporting...';
-      setStatus('Rendering high-resolution poster...');
+      setStatus('1/5 Preparing export...');
 
       try {
         if (document.fonts) {
@@ -1089,13 +1686,8 @@ const DEFAULTS = Object.freeze({
         }
 
         const exportState = getExportState();
-        const baseDims = dimsMap[exportState.format];
-        if (!baseDims) throw new Error('Unsupported output format.');
-        const dpiScale = exportState.exportDpi / 300;
-        const targetDims = {
-          width: Math.round(baseDims.width * dpiScale),
-          height: Math.round(baseDims.height * dpiScale)
-        };
+        const targetDims = getTargetDimensions(exportState.format, exportState.exportDpi);
+        setStatus('2/5 Loading detailed map tiles...');
 
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = targetDims.width;
@@ -1111,25 +1703,37 @@ const DEFAULTS = Object.freeze({
 
         const scaleFactor = targetDims.width / mapFrame.clientWidth;
         const bWidth = exportState.borderEnabled ? exportState.borderWidth * scaleFactor : 0;
+        const mapWidth = Math.max(1, Math.round(targetDims.width - (bWidth * 2)));
+        const mapHeight = Math.max(1, Math.round(targetDims.height - (bWidth * 2)));
 
-      ctx.fillStyle = exportState.borderColor;
-      ctx.fillRect(0, 0, targetDims.width, targetDims.height);
+        ctx.fillStyle = exportState.borderColor;
+        ctx.fillRect(0, 0, targetDims.width, targetDims.height);
+        if (exportState.shape !== 'none') {
+          ctx.fillStyle = exportState.shapeColor;
+          ctx.fillRect(bWidth, bWidth, mapWidth, mapHeight);
+        }
 
-      const presetKey = exportState.filterPreset;
-      const baseFilter = filterPresets[presetKey] || '';
-      const contrastSetting = exportState.contrast;
-      ctx.filter = `${baseFilter} contrast(${contrastSetting}%) brightness(${exportState.brightness}%) saturate(${exportState.saturation}%)`.trim();
+        const presetKey = exportState.filterPreset;
+        const baseFilter = filterPresets[presetKey] || '';
+        const contrastSetting = exportState.contrast;
+        ctx.filter = `${baseFilter} contrast(${contrastSetting}%) brightness(${exportState.brightness}%) saturate(${exportState.saturation}%)`.trim();
 
-      const mapWidth = Math.max(1, Math.round(targetDims.width - (bWidth * 2)));
-      const mapHeight = Math.max(1, Math.round(targetDims.height - (bWidth * 2)));
       const { exportMap, container } = await createExportMap(mapWidth, mapHeight, exportState);
+      setStatus('3/5 Rendering map and layout...');
       const mapCanvas = exportMap.getCanvas();
-      if (exportState.innerBorderRadius > 0) {
+      if (exportState.innerBorderRadius > 0 || exportState.shape !== 'none') {
         const innerRadius = exportState.innerBorderRadius * scaleFactor;
         ctx.save();
         ctx.beginPath();
-        ctx.roundRect(bWidth, bWidth, mapWidth, mapHeight, innerRadius);
-        ctx.clip();
+        if (exportState.shape === 'none') {
+          ctx.roundRect(bWidth, bWidth, mapWidth, mapHeight, innerRadius);
+          ctx.clip();
+        } else {
+          const shapePath = getShapePath(exportState.shape, mapWidth, mapHeight);
+          ctx.translate(bWidth, bWidth);
+          ctx.clip(shapePath);
+          ctx.translate(-bWidth, -bWidth);
+        }
       }
       ctx.drawImage(
         mapCanvas, 
@@ -1138,7 +1742,7 @@ const DEFAULTS = Object.freeze({
         targetDims.width - (bWidth * 2), 
         targetDims.height - (bWidth * 2)
       );
-      if (exportState.innerBorderRadius > 0) ctx.restore();
+      if (exportState.innerBorderRadius > 0 || exportState.shape !== 'none') ctx.restore();
       exportMap.remove();
       container.remove();
 
@@ -1157,15 +1761,19 @@ const DEFAULTS = Object.freeze({
         const proportionalScale = mapWidth / previewRefWidth;
         const measuredOverlay = exportState.overlay;
 
-        const fullWidthStyles = [
-          'style-fullwidth-left', 'style-fullwidth', 'style-fullwidth-right',
-          'style-fullwidth-top-left', 'style-fullwidth-top', 'style-fullwidth-top-right'
-        ];
-        if (![...fullWidthStyles, 'style-deck', 'style-minimal'].includes(style)) {
-          const boxX = bWidth + measuredOverlay.x * proportionalScale;
+        const isBanner = style.startsWith('banner-');
+        if (![isBanner, style === 'special-deck', style === 'special-minimal'].some(Boolean)) {
           const boxWidth = measuredOverlay.width * proportionalScale;
           const boxHeight = measuredOverlay.height * proportionalScale;
-          const isBottomCorner = style === 'style-bottom-right-absolute';
+          const isBottomCorner = style.startsWith('corner-bottom-');
+          const isCorner = style.startsWith('corner-');
+          const isRightCorner = isCorner && style.endsWith('-right');
+          const isLeftCorner = isCorner && style.endsWith('-left');
+          const boxX = isLeftCorner
+            ? bWidth
+            : isRightCorner
+              ? targetDims.width - bWidth - boxWidth
+              : bWidth + measuredOverlay.x * proportionalScale;
           const boxY = isBottomCorner
             ? targetDims.height - bWidth - boxHeight
             : bWidth + measuredOverlay.y * proportionalScale;
@@ -1194,7 +1802,7 @@ const DEFAULTS = Object.freeze({
               ctx.fillText(texts[index], boxX + boxWidth / 2, boxY + child.baselineY * proportionalScale);
             }
           });
-        } else if (fullWidthStyles.includes(style)) {
+        } else if (isBanner) {
           const bannerHeight = 180 * proportionalScale;
           const isTop = style.includes('-top');
           const isLeft = style.endsWith('-left');
@@ -1221,7 +1829,7 @@ const DEFAULTS = Object.freeze({
           ctx.font = `700 ${22 * proportionalScale}px ${fontChoice}`;
           ctx.fillText(cityCountryEl.textContent, textX, bannerY + (140 * proportionalScale));
 
-        } else if (style === 'style-deck') {
+        } else if (style === 'special-deck') {
           const bannerHeight = 130 * proportionalScale;
           const bannerY = targetDims.height - bWidth - bannerHeight - (30 * proportionalScale);
           const margin = 30 * proportionalScale;
@@ -1243,7 +1851,7 @@ const DEFAULTS = Object.freeze({
           ctx.font = `700 ${20 * proportionalScale}px ${fontChoice}`;
           ctx.fillText(cityCountryEl.textContent, targetDims.width - bWidth - margin - (30 * proportionalScale), bannerY + (70 * proportionalScale));
 
-        } else if (style === 'style-minimal') {
+        } else if (style === 'special-minimal') {
            const boxX = targetDims.width / 2;
            const boxY = targetDims.height - bWidth - (80 * proportionalScale);
            
@@ -1269,7 +1877,30 @@ const DEFAULTS = Object.freeze({
         }
       }
 
+      drawExportAnnotations(ctx, exportState, targetDims.width, targetDims.height, mapWidth, bWidth);
+
         const mimeType = exportState.exportType;
+        const baseFilename = `MapArtGen_${exportState.city.trim().replace(/\s+/g, '_')}_${exportState.exportDpi}dpi_${getFileTimestamp()}`;
+        setStatus('4/5 Encoding output...');
+        if (mimeType === 'image/svg+xml') {
+          downloadBlob(new Blob([canvasToSvg(exportCanvas, exportState)], { type: mimeType }), `${baseFilename}.svg`);
+          setStatus('5/5 Poster exported.');
+          return;
+        }
+        if (mimeType === 'application/pdf') {
+          const jpegBlob = await new Promise((resolve, reject) => {
+            exportCanvas.toBlob(result => result ? resolve(result) : reject(new Error('JPEG encoding failed.')), 'image/jpeg', 0.92);
+          });
+          const result = await processExportInWorker('pdf', {
+            blob: jpegBlob,
+            filename: `${baseFilename}.pdf`,
+            width: exportCanvas.width,
+            height: exportCanvas.height
+          });
+          downloadBlob(result.blob, result.filename);
+          setStatus('5/5 Poster exported.');
+          return;
+        }
         const extension = mimeType.split('/')[1].replace('jpeg', 'jpg');
         const blob = await new Promise((resolve, reject) => {
           exportCanvas.toBlob(result => {
@@ -1277,15 +1908,8 @@ const DEFAULTS = Object.freeze({
             else reject(new Error(`${extension.toUpperCase()} encoding failed.`));
           }, mimeType, 0.92);
         });
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = `MapArtGen_${exportState.city.trim().replace(/\s+/g, '_')}_${exportState.exportDpi}dpi_${getFileTimestamp()}.${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
-        setStatus('Poster exported.');
+        downloadBlob(blob, `${baseFilename}.${extension}`);
+        setStatus('5/5 Poster exported.');
       } catch (error) {
         console.error('Export failed', error);
         const location = error.stack?.match(/MapArtGen\.html:(\d+):(\d+)/)?.[0];
@@ -1296,3 +1920,98 @@ const DEFAULTS = Object.freeze({
       }
     });
 
+    function getVisibleCityFeatures(includeBuildings, includeRoads) {
+      const layers = map.getStyle().layers || [];
+      const collect = role => {
+        const layerIds = layers.filter(layer => getLayerRole(layer) === role && ['fill', 'line'].includes(layer.type)).map(layer => layer.id);
+        if (!layerIds.length) return [];
+        const seen = new Set();
+        return map.queryRenderedFeatures({ layers: layerIds }).filter(feature => {
+          const key = `${feature.source || ''}:${feature.sourceLayer || ''}:${feature.id ?? JSON.stringify(feature.geometry)}`;
+          if (seen.has(key) || !feature.geometry?.coordinates) return false;
+          seen.add(key);
+          return true;
+        });
+      };
+      return {
+        buildings: includeBuildings ? collect('building').slice(0, 3000) : [],
+        roads: includeRoads ? collect('road').slice(0, 8000) : [],
+        water: collect('water').slice(0, 4000)
+      };
+    }
+
+    $('stlExportBtn').addEventListener('click', async () => {
+      const button = $('stlExportBtn');
+      button.disabled = true;
+      setStatus('Loading elevation data for 3D model...');
+      try {
+        syncStateFromControls();
+        const bounds = map.getBounds();
+        const cityFeatures = getVisibleCityFeatures(state.stlBuildingsEnabled, state.stlRoadsEnabled);
+        const grid = await getElevationGrid(bounds);
+        const mesh = rotateMeshToMapBearing(
+          createTerrainMesh(grid.heights, grid.size, bounds, state.terrainExaggeration, cityFeatures),
+          map.getBearing()
+        );
+        const model = createTerrainStl(mesh);
+        const name = `MapArtGen_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.stl`;
+        downloadBlob(model, name);
+        setStatus('3D model exported.');
+      } catch (error) {
+        console.error('STL export failed', error);
+        setStatus(`3D model export failed: ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $('threeMfExportBtn').addEventListener('click', async () => {
+      const button = $('threeMfExportBtn');
+      button.disabled = true;
+      setStatus('Loading elevation data for colored 3D model...');
+      try {
+        syncStateFromControls();
+        const bounds = map.getBounds();
+        const cityFeatures = getVisibleCityFeatures(state.stlBuildingsEnabled, state.stlRoadsEnabled);
+        const grid = await getElevationGrid(bounds);
+        const mesh = rotateMeshToMapBearing(
+          createTerrainMesh(grid.heights, grid.size, bounds, state.terrainExaggeration, cityFeatures),
+          map.getBearing()
+        );
+        const model = createColoredThreeMf(mesh, {
+          terrain: state.mountainColor,
+          building: state.layers.buildingColor,
+          road: state.layers.roadColor,
+          water: state.layers.waterColor
+        });
+        const name = `MapArtGen_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.3mf`;
+        downloadBlob(model, name);
+        setStatus('Colored 3D model exported.');
+      } catch (error) {
+        console.error('3MF export failed', error);
+        setStatus(`Colored 3D model export failed: ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.target.matches('input, select, textarea')) return;
+      if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        map.zoomTo(map.getZoom() + 0.25, { duration: 150 });
+      } else if (event.key === '-') {
+        event.preventDefault();
+        map.zoomTo(map.getZoom() - 0.25, { duration: 150 });
+      } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        exportBtn.click();
+      } else if (event.key === '/') {
+        event.preventDefault();
+        searchInput.focus();
+      } else if (/^[1-9]$/.test(event.key)) {
+        event.preventDefault();
+        const block = sectionBlocks[Number(event.key) - 1];
+        block?.querySelector('.section-header').click();
+      }
+    });

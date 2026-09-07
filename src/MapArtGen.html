@@ -7,7 +7,7 @@
   - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 
    Application: MapArtGen
-  Version: 2026.08.06.130050
+  Version: 2026.08.08.135902
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -68,8 +68,11 @@
                   <option value="image/png">PNG</option>
                   <option value="image/jpeg">JPEG</option>
                   <option value="image/webp">WebP</option>
+                  <option value="image/svg+xml">SVG</option>
+                  <option value="application/pdf">PDF</option>
                 </select>
               </div>
+              <div id="outputDimensions" class="output-dimensions">2480 × 3508 px</div>
               <div class="control-group">
                 <label>Print DPI</label>
                 <select id="exportDpi" autocomplete="off">
@@ -82,12 +85,47 @@
           </div>
         </div>
 
-        <!-- 2. Border -->
+        <!-- 2. Shape -->
+        <div class="section-block collapsed" title="Mask the map inside a decorative shape">
+          <div class="section-header">
+            <span class="section-header-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg>
+              2. Shape
+            </span>
+          </div>
+          <div class="section-body">
+            <div class="row row-centered">
+              <div class="control-group control-fill">
+                <label>Shape</label>
+                <select id="shapeSelect" autocomplete="off">
+                  <option value="none">None</option>
+                  <option value="circle">Circle</option>
+                  <option value="heart">Heart</option>
+                  <option value="star">Star</option>
+                  <option value="house">House</option>
+                  <option value="spiral">Spiral</option>
+                  <option value="peace">Peace Sign</option>
+                  <option value="smiley">Smiley</option>
+                  <option value="diamond">Diamond</option>
+                  <option value="hexagon">Hexagon</option>
+                  <option value="cross">Cross</option>
+                  <option value="cloud">Cloud</option>
+                </select>
+              </div>
+              <div class="control-group control-fixed">
+                <label>Layer Color</label>
+                <input type="color" id="shapeColor" value="#ffffff" autocomplete="off">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Border -->
         <div class="section-block collapsed" title="Customize canvas outer framing border">
           <div class="section-header">
             <span class="section-header-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="10" height="10" rx="1" ry="1"></rect></svg>
-              2. Border
+              3. Border
             </span>
           </div>
           <div class="section-body">
@@ -129,25 +167,36 @@
             <div class="control-group">
               <select id="labelStyle" autocomplete="off" title="Select poster title layout template position">
                 <option value="none">None</option>
-                <option value="style-box">Floating Box (Bottom)</option>
-                <option value="style-bottom-right">Floating Box (Bottom-Right)</option>
-                <option value="style-bottom-right-absolute" selected>Floating Box (Bottom-Right Corner)</option>
-                <option value="style-top">Floating Box (Top)</option>
-                <option value="style-top-right">Floating Box (Top-Right)</option>
-                <option value="style-top-right-absolute">Floating Box (Top-Right Corner)</option>
-                <option value="style-fullwidth-left">Full Width Banner Bottom (Left Aligned)</option>
-                <option value="style-fullwidth">Full Width Banner Bottom (Centered)</option>
-                <option value="style-fullwidth-right">Full Width Banner Bottom (Right Aligned)</option>
-                <option value="style-fullwidth-top-left">Full Width Banner Top (Left Aligned)</option>
-                <option value="style-fullwidth-top">Full Width Banner Top (Centered)</option>
-                <option value="style-fullwidth-top-right">Full Width Banner Top (Right Aligned)</option>
-                <option value="style-minimal">Minimalist Transparent</option>
-                <option value="style-deck">Bottom Modern Deck</option>
-                <option value="style-toptag">Top Floating Tag</option>
-                <option value="style-badge">Centered Badge Overlay</option>
+                <optgroup label="Floating boxes">
+                  <option value="float-bottom-left">Bottom · Left</option>
+                  <option value="float-bottom-center">Bottom · Center</option>
+                  <option value="float-bottom-right">Bottom · Right</option>
+                  <option value="float-top-left">Top · Left</option>
+                  <option value="float-top-center">Top · Center</option>
+                  <option value="float-top-right">Top · Right</option>
+                </optgroup>
+                <optgroup label="Corner boxes">
+                  <option value="corner-bottom-left">Bottom · Left Corner</option>
+                  <option value="corner-bottom-right" selected>Bottom · Right Corner</option>
+                  <option value="corner-top-left">Top · Left Corner</option>
+                  <option value="corner-top-right">Top · Right Corner</option>
+                </optgroup>
+                <optgroup label="Full-width banners">
+                  <option value="banner-bottom-left">Bottom · Left Aligned</option>
+                  <option value="banner-bottom-center">Bottom · Centered</option>
+                  <option value="banner-bottom-right">Bottom · Right Aligned</option>
+                  <option value="banner-top-left">Top · Left Aligned</option>
+                  <option value="banner-top-center">Top · Centered</option>
+                  <option value="banner-top-right">Top · Right Aligned</option>
+                </optgroup>
+                <optgroup label="Special layouts">
+                  <option value="special-badge">Centered Badge</option>
+                  <option value="special-deck">Modern Bottom Deck</option>
+                  <option value="special-minimal">Minimal Transparent</option>
+                  <option value="special-tag">Top Tag</option>
+                </optgroup>
               </select>
             </div>
-
             <!-- Label Font Selection -->
             <div class="control-group">
               <select id="labelFontSelect" autocomplete="off" title="Select font typeface for location title and coordinates">
@@ -190,17 +239,18 @@
                 </div>
               </div>
             </div>
-            <div class="row">
-              <div class="control-group control-fill">
+            <div class="row layout-background-row">
+              <div class="control-group layout-background-color">
                 <div class="color-field-inline" title="Choose title container background color">
                   <input type="color" id="labelBgColor" value="#ffffff" autocomplete="off">
                   <label class="label-left">Background Color</label>
                 </div>
               </div>
-            </div>
-            <div class="control-group">
-              <label>Opacity: <span><span id="opacityNum">100</span>%</span></label>
-              <input type="range" id="labelOpacity" min="0" max="100" value="100" autocomplete="off" title="Adjust title container background opacity">
+              <div id="contrastWarning" class="contrast-warning" role="status"></div>
+              <div class="control-group layout-background-opacity">
+                <label>Opacity: <span><span id="opacityNum">100</span>%</span></label>
+                <input type="range" id="labelOpacity" min="0" max="100" value="100" autocomplete="off" title="Adjust title container background opacity">
+              </div>
             </div>
           </div>
         </div>
@@ -237,10 +287,10 @@
           </div>
           <div class="section-body">
 
-            <!-- Pre-defined Color Sets Selector with sorted presets and padded ongoing numbers -->
+            <!-- Preset color selector with sorted names and padded sequence numbers -->
             <div class="control-group control-spaced">
               <label>Color Palette Preset</label>
-              <select id="colorPresetSelect" autocomplete="off" title="Select a pre-defined color set for all items"></select>
+              <select id="colorPresetSelect" autocomplete="off" title="Select a predefined color set for all items"></select>
             </div>
             <button type="button" class="secondary-action-btn" id="randomPresetBtn">Generate Random preset</button>
 
@@ -396,6 +446,11 @@
             </div>
             </div>
 
+            <div class="layer-order-control">
+              <label>Layer order</label>
+              <div id="layerOrderList" class="layer-order-list" aria-label="Map layer order"></div>
+            </div>
+
           </div>
         </div>
 
@@ -414,6 +469,9 @@
                 <option value="cities_only">City Names Only</option>
                 <option value="streets_only">Street Names Only</option>
                 <option value="water_only">River & Waterway Names Only</option>
+                <option value="transit_only">Transit Names Only</option>
+                <option value="poi_only">Points of Interest Only</option>
+                <option value="natural_only">Natural Feature Names Only</option>
                 <option value="none" selected>None (Clean Map)</option>
               </select>
             </div>
@@ -441,12 +499,41 @@
           </div>
         </div>
 
-        <!-- 8. Misc -->
+        <div class="section-block collapsed" title="Add elevation relief and color it from the selected mountain color">
+          <div class="section-header">
+            <span class="section-header-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6-9 4 5 3-4 5 8"></path><path d="M3 19h18"></path></svg>
+              8. Terrain
+            </span>
+          </div>
+          <div class="section-body">
+            <div class="layer-title-bar">
+              <span>Height shading</span>
+              <label><input type="checkbox" id="terrainToggle" autocomplete="off" title="Show terrain relief based on elevation data"> On</label>
+            </div>
+            <div class="row row-centered">
+              <div class="color-field-inline">
+                <input type="color" id="mountainColor" value="#64748b" autocomplete="off" title="Set the base color for mountain height shading">
+                <label class="label-left">Mountain color</label>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Relief strength: <span id="terrainExaggerationVal">100</span>%</label>
+              <input type="range" id="terrainExaggeration" min="20" max="300" value="100" autocomplete="off" title="Adjust the terrain height shading strength">
+            </div>
+            <div class="row annotation-options">
+              <label><input type="checkbox" id="stlBuildingsToggle" checked autocomplete="off" title="Include visible building footprints in the 3D model"> Buildings</label>
+              <label><input type="checkbox" id="stlRoadsToggle" checked autocomplete="off" title="Include visible streets in the 3D model"> Streets</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. Misc -->
         <div class="section-block collapsed" title="Miscellaneous configuration options">
           <div class="section-header">
             <span class="section-header-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83l2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              8. Misc
+              9. Misc
             </span>
           </div>
           <div class="section-body">
@@ -462,6 +549,10 @@
               <label>Saturation: <span id="saturationNum">100</span>%</label>
               <input type="range" id="saturationVal" min="0" max="200" value="100" autocomplete="off" title="Adjust global color saturation">
             </div>
+            <div class="row annotation-options">
+              <label><input type="checkbox" id="scaleToggle" autocomplete="off" title="Show a distance scale on the map"> Scale</label>
+              <label><input type="checkbox" id="northToggle" autocomplete="off" title="Show the direction of north when the map is rotated"> North</label>
+            </div>
             <button type="button" class="secondary-action-btn" id="randomizeDesignBtn">Randomize design</button>
           </div>
         </div>
@@ -474,9 +565,11 @@
           <span id="exportBtnLabel">Export</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
+        <button type="button" class="secondary-action-btn" id="stlExportBtn" title="Generate an STL terrain model of the visible map area for 3D printing">Export 3D model (STL)</button>
+        <button type="button" class="secondary-action-btn" id="threeMfExportBtn" title="Generate a colored 3MF terrain model using the selected map colors">Export colored 3D model (3MF)</button>
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.08.06.130050</span>
+          <span id="versionLabel">Version 2026.08.08.135902</span>
           <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
@@ -495,23 +588,42 @@
       <button type="button" id="zoomOutFineBtn" class="map-zoom-btn" title="Zoom Out (Fine Adjustment)" aria-label="Zoom out slightly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
       <button type="button" id="zoomOutBigBtn" class="map-zoom-btn" title="Zoom Out (Big Steps)" aria-label="Zoom out by two levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M15 18h6"></path></svg></button>
       <div class="map-control-separator" aria-hidden="true"></div>
+      <button type="button" id="rotateLeftBtn" class="map-zoom-btn" title="Rotate Map Left" aria-label="Rotate map left"><svg viewBox="0 0 24 24"><path d="M4 4v6h6"></path><path d="M5.5 15a8 8 0 1 0 1-8.5L4 10"></path></svg></button>
+      <button type="button" id="resetBearingBtn" class="map-zoom-btn" title="Reset Map Orientation" aria-label="Reset map orientation"><svg viewBox="0 0 24 24"><path d="M12 3 8 12l4-2 4 2-4-9Z"></path><circle cx="12" cy="12" r="9"></circle></svg></button>
+      <button type="button" id="rotateRightBtn" class="map-zoom-btn" title="Rotate Map Right" aria-label="Rotate map right"><svg viewBox="0 0 24 24"><path d="M20 4v6h-6"></path><path d="M18.5 15a8 8 0 1 1-1-8.5L20 10"></path></svg></button>
+      <div class="map-control-separator" aria-hidden="true"></div>
       <button type="button" id="magnifierBtn" class="map-zoom-btn" title="Toggle Live Magnifier Lens" aria-label="Toggle live magnifier"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m15.5 15.5 5 5"></path></svg></button>
       <div id="zoomLevelDisplay" class="zoom-level-display">13.00</div>
     </div>
 
     <div class="preview-container">
+      <div class="preset-navigation" aria-label="Color preset navigation">
+        <button type="button" id="previousPresetBtn" class="map-zoom-btn" title="Previous Color Preset" aria-label="Previous color preset">↑</button>
+        <button type="button" id="nextPresetBtn" class="map-zoom-btn" title="Next Color Preset" aria-label="Next color preset">↓</button>
+      </div>
       <div id="mapFrame" class="map-frame ratio-a4-portrait">
+        <svg id="shapeMask" class="shape-mask" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <mask id="shapeCutoutMask">
+              <rect width="100" height="100" fill="white"></rect>
+              <path id="shapeCutoutPath" fill="black"></path>
+            </mask>
+          </defs>
+          <rect id="shapeMaskColor" width="100" height="100" mask="url(#shapeCutoutMask)"></rect>
+        </svg>
         <div id="map"></div>
       
       <!-- Live Magnifying Glass Lens -->
       <canvas id="mapMagnifierLens" class="map-magnifier-lens" width="280" height="280" aria-hidden="true"></canvas>
 
       <!-- Dynamic Label Overlay -->
-        <div id="mapLabelOverlay" class="map-label-overlay style-bottom-right-absolute">
+        <div id="mapLabelOverlay" class="map-label-overlay corner-bottom-right">
           <div id="cityName" class="map-label-city">HEIDELBERG</div>
           <div id="cityCoords" class="map-label-coords">49.4077° N / 8.6908° E</div>
           <div id="cityCountry" class="map-label-country">GERMANY</div>
         </div>
+        <div id="mapScaleOverlay" class="map-scale-overlay" aria-hidden="true"><span></span></div>
+        <div id="northOverlay" class="north-overlay" aria-hidden="true"><span>N</span><svg viewBox="0 0 24 24"><path d="M12 2 7 17l5-3 5 3L12 2Z"></path></svg></div>
       </div>
       <div class="preview-detail-note">The preview might contain less detail than the generated image (for example, buildings may be hidden).</div>
     </div>
