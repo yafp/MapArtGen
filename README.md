@@ -14,9 +14,8 @@ It is inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 
 
 ## UI
-![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/img/MapArtGen_Preview.png)
-
-
+![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/.github/MapArtGen_Preview.png)
+  
 ## Usage
 - Download the latest release 
 - Unzip the Download
