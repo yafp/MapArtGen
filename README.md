@@ -1,24 +1,18 @@
 # MapArtGen
-
 ## About
-MapArtGen is a free Map Art Generator.
+MapArtGen is a small, self-contained web application for turning map-data into stylized map art suitable for printing.
 
-Select a location, configure a few parameters, and generate or export a high-resolution graphic for printing.
+Select a location, configure a few parameters and generate or export a high-resolution graphic for printing.
 
-Terrain height shading uses public Terrarium elevation tiles and derives its highlight and shadow variations from the selected mountain color. 
-The same elevation data can be exported as a watertight binary STL terrain model for 3D printing. 
-
-Layer order can be adjusted with the controls under Colors, and optional scale and north annotations appear in both the preview and graphic export.
-
-It is inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
+Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 
 
 ## UI
 ![Preview](https://raw.githubusercontent.com/yafp/MapArtGen/refs/heads/main/.github/MapArtGen_Preview.png)
   
 ## Usage
-- Download the latest release 
-- Unzip the Download
+- Download latest release from https://github.com/yafp?tab=packages&repo_name=MapArtGen
+- Extract
 - Double-click the .html file
 
 ## Developers
