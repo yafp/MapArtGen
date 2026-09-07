@@ -28,6 +28,7 @@ It is inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 - `MapArtGen.css` contains all presentation styles.
 - `js/presets.js` contains the palette catalog and normalized preset data.
 - `js/app.js` contains state, map, geocoding, preview, UI, and export behavior.
+- `js/export-worker.js` contains the exporting routines.
 
 
 
