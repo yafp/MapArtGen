@@ -21,7 +21,7 @@ You can find a live demo of the latest released version on [Github Pages](https:
 ## Developers
 ### Structure
 
-- `MapArtGen.html` contains the application markup.
+- `index.html` contains the application markup.
 - `MapArtGen.css` contains all presentation styles.
 - `js/presets.js` contains the palette catalog and normalized preset data.
 - `js/app.js` contains state, map, geocoding, preview, UI, and export behavior.
