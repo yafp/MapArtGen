@@ -1,13 +1,14 @@
 <!--
-  META INSTRUCTION FOR AI:
-  - This meta-data block MUST be updated and re-written on EVERY code-generation.
-  - This metadata MUST persist in any newly generated code output.
-  - The version name pattern MUST strictly follow: YYYY.MM.DD.hhmmss (Date and Time based approach).
-  - The .html file the AI generates on new request must follow this naming: cartiva_VERSIONSTRING.html
-  - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
+	=============================================================================
+	cartiva - index.html
+ 	=============================================================================
 
-	Application: 	cartiva
-	Version: 		2026.09.07.213200
+	META INSTRUCTION FOR AI:
+	- This meta-data block MUST be updated and re-written on EVERY code-generation.
+	- This metadata MUST persist in any newly generated code output.
+	- The version name pattern MUST strictly follow: YYYY.MM.DD.hhmmss (Date and Time based approach).
+	- The .html file the AI generates on new request must follow this naming: cartiva_VERSIONSTRING.html
+	- The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -25,7 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Montserrat:wght@700;800&family=Pacifico&family=Playfair+Display:wght@700;800&family=Roboto:wght@700;900&family=Space+Mono:wght@700&family=Lora:wght@700&family=Oswald:wght@700&family=Merriweather:wght@700&family=Raleway:wght@700&family=Ubuntu:wght@700&family=Bebas+Neue&family=Abril+Fatface&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
   
-  <!-- Cartiva CSS -->
+  <!-- cartiva CSS -->
   <link href="cartiva.css" rel="stylesheet">
 </head>
 
@@ -34,16 +35,17 @@
     <div class="sidebar">
 	  <!-- Sidebar Header -->
       <div class="sidebar-header">
-        <h1>cartiva</h1>
-        <div class="subtitle">a small, self-contained creative cartography web-app</div>
+		<!--
+		<img src="img/logo.png" width="50">
+		-->        
+		<h1 id="appName">DUMMY_APPNAME</h1>
+        <div class="subtitle" id="appDescription">DUMMY_APPDESCRIPTION</div>
       </div>
 	
 	  <!-- Sidebar-content -->
       <div class="sidebar-content">
-        <div class="sidebar-area-heading">Format</div>
-
-		<!-- 1. Location -->
-        <div class="section-block overflow-visible collapsed" title="Search and center target geographic location">
+		<div class="sidebar-area-heading">Location</div>
+		<div class="section-block overflow-visible " title="Search and center target geographic location">
           <div class="section-header">
             <span class="section-header-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -59,10 +61,13 @@
               <div id="searchResults" class="search-results" role="listbox" aria-label="Location suggestions"></div>
             </div>
           </div>
-        </div>
-
+		</div>
+		
+		
+		
+        <div class="sidebar-area-heading">Format</div>
         <!-- 2. Size -->
-        <div class="section-block" title="Configure output media dimensions and aspect ratio">
+        <div class="section-block collapsed" title="Configure output media dimensions and aspect ratio">
           <div class="section-header">
             <span class="section-header-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
@@ -184,7 +189,7 @@
           <div class="section-header">
             <span class="section-header-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
-              5. Layout
+              5. Label layout
             </span>
           </div>
           <div class="section-body">
@@ -585,8 +590,8 @@
 		
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
-          <span id="versionLabel">Version 2026.09.07.213200</span>
-          <a href="https://github.com/yafp/cartiva/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
+          <span id="appVersion"></span>
+          <a href="" id="appGithubLink" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
           </a>

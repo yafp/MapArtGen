@@ -3,6 +3,46 @@
 // =============================================================================
 
 
+// All basic app constants - as 1 object
+const APP = {
+  NAME: "cartiva",
+  DESCRIPTION: "a small, self-contained creative cartography web-app",
+  VERSION: "2026.09.07.213200", // yyyy.mm.dd.HHMMSS
+  GITHUBLINK: "https://github.com/yafp/cartiva"
+};
+
+
+// Init some values in the UI with constants
+// 
+// Tab title
+document.title = `${APP.NAME} - ${APP.DESCRIPTION} - v${APP.VERSION}`;
+
+// AppName
+const heading = document.getElementById('appName');
+if (appName) {
+  appName.textContent = `${APP.NAME}`;
+}
+
+// AppDescription
+const appDescription = document.getElementById('appDescription');
+if (appDescription) {
+  appDescription.textContent = `${APP.DESCRIPTION}`;
+}
+
+// AppVersion
+const appVersion = document.getElementById('appVersion');
+if (appVersion) {
+  appVersion.textContent = `${APP.VERSION}`;
+}
+
+// AppGithubLink
+const appGithubLink = document.getElementById('appGithubLink');
+if (appGithubLink) {
+  appGithubLink.href = `${APP.GITHUBLINK}`;
+}
+
+
+
 // -----------------------------------------------------------------------------
 // DEFAULT CONFIGURATION
 // Frozen object with default values for presets, labels, export, filters,
@@ -431,6 +471,11 @@ const DEFAULTS = Object.freeze({
 // Runs on DOMContentLoaded and on pageshow if persisted.
 // -----------------------------------------------------------------------------
     function initializeDefaults() {
+		
+		
+		
+	
+		
       const form = document.getElementById('settingsForm');
       if (form) form.reset();
       document.getElementById('roadColor').value = "#374151";
