@@ -10,7 +10,7 @@ cartiva is a small, self-contained creative cartography web-app.
 Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 
 ## Demo
-You can find a live demo of the latest released version on [Github Pages](https://yafp.github.io/MapArtGen/index.html)
+You can find a live demo of the latest released version on [Github Pages](https://yafp.github.io/cartiva/index.html)
 
 ## Usage
 - Download [latest release](https://github.com/yafp/cartiva/releases)
