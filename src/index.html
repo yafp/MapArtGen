@@ -3,10 +3,10 @@
   - This meta-data block MUST be updated and re-written on EVERY code-generation.
   - This metadata MUST persist in any newly generated code output.
   - The version name pattern MUST strictly follow: YYYY.MM.DD.hhmmss (Date and Time based approach).
-  - The .html file the AI generates on new request must follow this naming: MapArtGen_VERSIONSTRING.html
+  - The .html file the AI generates on new request must follow this naming: cartiva_VERSIONSTRING.html
   - The AI related to this task MUST ALWAYS output the FULL code after update instructions have been received from the developer.
 
-   Application: MapArtGen
+   Application: cartiva
   Version: 2026.09.07.213200
 -->
 <!DOCTYPE html>
@@ -14,7 +14,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MapArtGen - High-Res City Poster Generator</title>
+  <title>cartiva - a small, self-contained creative cartography web-app</title>
   
   <!-- MapLibre GL JS CSS & JS -->
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -24,14 +24,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Montserrat:wght@700;800&family=Pacifico&family=Playfair+Display:wght@700;800&family=Roboto:wght@700;900&family=Space+Mono:wght@700&family=Lora:wght@700&family=Oswald:wght@700&family=Merriweather:wght@700&family=Raleway:wght@700&family=Ubuntu:wght@700&family=Bebas+Neue&family=Abril+Fatface&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-  <link href="MapArtGen.css" rel="stylesheet">
+  <link href="cartiva.css" rel="stylesheet">
 </head>
 <body>
   <form id="settingsForm" class="settings-form">
     <div class="sidebar">
       <div class="sidebar-header">
-        <h1>MapArtGen</h1>
-        <div class="subtitle">A free art generator using maps</div>
+        <h1>cartiva</h1>
+        <div class="subtitle">a small, self-contained creative cartography web-app</div>
       </div>
 
       <div class="sidebar-content">
@@ -577,7 +577,7 @@
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
           <span id="versionLabel">Version 2026.09.07.213200</span>
-          <a href="https://github.com/yafp/MapArtGen/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
+          <a href="https://github.com/yafp/cartiva/" target="_blank" rel="noopener noreferrer" title="View repository on GitHub">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             GitHub
           </a>
