@@ -1,3 +1,13 @@
+// =============================================================================
+// cartiva - app.js
+// =============================================================================
+
+
+// -----------------------------------------------------------------------------
+// DEFAULT CONFIGURATION
+// Frozen object with default values for presets, labels, export, filters,
+// terrain, STL options, and layer ordering.
+// -----------------------------------------------------------------------------
 const DEFAULTS = Object.freeze({
       preset: 'alpine',
       labelStyle: 'corner-bottom-right',
@@ -21,6 +31,12 @@ const DEFAULTS = Object.freeze({
       northEnabled: false,
       layerOrder: ['land', 'water', 'forest', 'landCover', 'terrain', 'road', 'boundary', 'building']
     });
+
+// -----------------------------------------------------------------------------
+// APPLICATION STATE
+// Mutable state initialized from DEFAULTS and extended with map/location data.
+// Updated as the user interacts with controls and the map.
+// -----------------------------------------------------------------------------
     const state = {
       ...DEFAULTS,
       center: [8.69079, 49.40768],
@@ -32,16 +48,37 @@ const DEFAULTS = Object.freeze({
       country: 'GERMANY',
       layers: {}
     };
+
+// -----------------------------------------------------------------------------
+// DOM CONTROL CACHE
+// Build a frozen map from element id → element for fast lookup.
+// -----------------------------------------------------------------------------
     const controls = Object.freeze(Object.fromEntries(
       Array.from(document.querySelectorAll('[id]'), element => [element.id, element])
     ));
+
+// -----------------------------------------------------------------------------
+// HELPER: SHORT $() FOR GETTING CONTROLS BY ID
+// Returns the cached element or null if not found.
+// -----------------------------------------------------------------------------
     const $ = id => controls[id] || null;
+
+// -----------------------------------------------------------------------------
+// MAPLIBRE & TERRAIN CONSTANTS
+// Base style URL, terrain source/layer IDs, and elevation tile URL template.
+// -----------------------------------------------------------------------------
     const MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
     const TERRAIN_SOURCE_ID = 'mapartgen-terrain';
     const TERRAIN_LAYER_ID = 'mapartgen-hillshade';
     const TERRAIN_COLOR_SOURCE_ID = 'mapartgen-elevation-colors';
     const TERRAIN_COLOR_LAYER_ID = 'mapartgen-elevation-colors-layer';
     const TERRAIN_TILES_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+// -----------------------------------------------------------------------------
+// OUTPUT DIMENSIONS MAP
+// Pixel dimensions for each paper format at 300 DPI.
+// Scaled later according to the chosen export DPI.
+// -----------------------------------------------------------------------------
     const dimsMap = {
       'a2-portrait': { width: 4961, height: 7016 },
       'a2-landscape': { width: 7016, height: 4961 },
@@ -56,6 +93,12 @@ const DEFAULTS = Object.freeze({
       'square-small': { width: 2480, height: 2480 }
     };
 
+
+// -----------------------------------------------------------------------------
+// CONTROL HELPERS: READ/WRITE
+// readControl: get value (boolean for checkbox, string otherwise).
+// writeControl: set value (boolean for checkbox, string otherwise).
+// -----------------------------------------------------------------------------
     function readControl(id) {
       const control = $(id);
       if (!control) {
@@ -73,6 +116,12 @@ const DEFAULTS = Object.freeze({
       else control.value = value;
     }
 
+
+// -----------------------------------------------------------------------------
+// STATE SYNC FROM UI
+// Reads all relevant controls and updates the global `state` object.
+// Also captures map camera state if `map` exists.
+// -----------------------------------------------------------------------------
     function syncStateFromControls() {
       state.format = readControl('formatSelect');
       state.exportType = readControl('exportType');
@@ -128,6 +177,14 @@ const DEFAULTS = Object.freeze({
       return state;
     }
 
+
+// -----------------------------------------------------------------------------
+// EXPORT STATE BUILDER
+// Constructs a comprehensive snapshot for high‑res export:
+// - All settings from controls/state
+// - Map bounds and camera
+// - Overlay geometry and label metrics for precise placement
+// -----------------------------------------------------------------------------
     function getExportState() {
       const mapRect = map.getContainer().getBoundingClientRect();
       const overlayRect = mapLabelOverlay.getBoundingClientRect();
@@ -200,11 +257,22 @@ const DEFAULTS = Object.freeze({
       };
     }
 
+
+// -----------------------------------------------------------------------------
+// STATE PATCH HELPER
+// Applies a partial update to `state` and optionally re-renders preview.
+// -----------------------------------------------------------------------------
     function setState(patch, { render = true } = {}) {
       Object.assign(state, patch);
       if (render) renderPreview();
     }
 
+
+// -----------------------------------------------------------------------------
+// DIMENSION CALCULATIONS
+// Compute target export size (px) for a given format and DPI.
+// Update on-screen dimension readout.
+// -----------------------------------------------------------------------------
     function getTargetDimensions(format = readControl('formatSelect'), dpi = Number(readControl('exportDpi'))) {
       const baseDims = dimsMap[format];
       if (!baseDims) throw new Error('Unsupported output format.');
@@ -220,6 +288,12 @@ const DEFAULTS = Object.freeze({
       $('outputDimensions').textContent = `${dimensions.width} × ${dimensions.height} px`;
     }
 
+
+// -----------------------------------------------------------------------------
+// CONTRAST & ACCESSIBILITY
+// relativeLuminance: WCAG-style luminance calculation for a hex color.
+// updateContrastWarning: compute text/background contrast and show warning.
+// -----------------------------------------------------------------------------
     function relativeLuminance(hex) {
       const channels = [1, 3, 5].map(index => {
         const value = parseInt(hex.slice(index, index + 2), 16) / 255;
@@ -243,6 +317,15 @@ const DEFAULTS = Object.freeze({
       warning.classList.toggle('good', passes);
     }
 
+
+// -----------------------------------------------------------------------------
+// PREVIEW RENDERING
+// Applies current state to the live preview:
+// - CSS filters on map
+// - Label overlay visibility, colors, font, background
+// - Border/frame styles and shape mask
+// - Map annotations (scale/north), text filters, dimensions, contrast warning
+// -----------------------------------------------------------------------------
     function renderPreview() {
       if (!mapReady) return;
       contrastNum.textContent = state.contrast;
@@ -287,11 +370,23 @@ const DEFAULTS = Object.freeze({
       updateContrastWarning();
     }
 
+
+// -----------------------------------------------------------------------------
+// UI UPDATE WRAPPER
+// Sync state from controls, then re-render preview.
+// -----------------------------------------------------------------------------
     function updateStateFromControls() {
       syncStateFromControls();
       renderPreview();
     }
 
+
+// -----------------------------------------------------------------------------
+// SHAPE MASKS
+// getShapePath: create scaled Path2D for a shape.
+// getShapeSvgPath: SVG path strings for various shapes (100×¹00 viewBox).
+// renderShapeMask: show/hide and configure the SVG shape mask overlay.
+// -----------------------------------------------------------------------------
     function getShapePath(shape, width, height) {
       const svgPath = getShapeSvgPath(shape);
       const path = new Path2D(svgPath);
@@ -329,6 +424,12 @@ const DEFAULTS = Object.freeze({
     document.getElementById('settingsForm').addEventListener('change', updateStateFromControls);
     let mapReady = false;
 
+
+// -----------------------------------------------------------------------------
+// INITIALIZATION
+// Reset form, apply default values to controls, and sync state.
+// Runs on DOMContentLoaded and on pageshow if persisted.
+// -----------------------------------------------------------------------------
     function initializeDefaults() {
       const form = document.getElementById('settingsForm');
       if (form) form.reset();
@@ -371,6 +472,12 @@ const DEFAULTS = Object.freeze({
       if (event.persisted) initializeDefaults();
     });
 
+
+// -----------------------------------------------------------------------------
+// ACCORDION SECTIONS
+// Collapsible section blocks with ARIA attributes and keyboard support.
+// Only one section expanded at a time.
+// -----------------------------------------------------------------------------
     // Accordion Control
     const sectionBlocks = document.querySelectorAll('.section-block');
     sectionBlocks.forEach(block => {
@@ -411,6 +518,12 @@ const DEFAULTS = Object.freeze({
         : 'Show layer fine-tuning';
     });
 
+
+// -----------------------------------------------------------------------------
+// MAPLIBRE MAP INITIALIZATION
+// Create map centered on Heidelberg with CartoDB Positron style.
+// Attach move/zoom/moveend handlers for UI updates and terrain refresh.
+// -----------------------------------------------------------------------------
     // MapLibre Map Initialization preset centered to Heidelberg
     const map = new maplibregl.Map({
       container: 'map',
@@ -441,6 +554,11 @@ const DEFAULTS = Object.freeze({
       }, 250);
     });
 
+
+// -----------------------------------------------------------------------------
+// ZOOM & ROTATE CONTROLS
+// Four zoom buttons (big/fine in/out) and three rotate buttons.
+// -----------------------------------------------------------------------------
     // 4-Button Zoom Controls Event Listeners (Big steps & Fine adjustments)
     document.getElementById('zoomInBigBtn').addEventListener('click', () => {
       map.zoomTo(map.getZoom() + 2, { duration: 300 });
@@ -458,6 +576,11 @@ const DEFAULTS = Object.freeze({
     $('rotateRightBtn').addEventListener('click', () => map.rotateTo(map.getBearing() + 15, { duration: 200 }));
     $('resetBearingBtn').addEventListener('click', () => map.rotateTo(0, { duration: 250 }));
 
+
+// -----------------------------------------------------------------------------
+// LIVE MAGNIFIER
+// Toggleable lens that shows a zoomed crop of the map canvas under the cursor.
+// -----------------------------------------------------------------------------
     // Live Magnifier Functionality
     const magnifierBtn = document.getElementById('magnifierBtn');
     const mapMagnifierLens = document.getElementById('mapMagnifierLens');
@@ -527,6 +650,11 @@ const DEFAULTS = Object.freeze({
       }
     });
 
+
+// -----------------------------------------------------------------------------
+// LIVE FILTERS (PRESETS + CONTRAST/BRIGHTNESS/SATURATION)
+// Apply CSS filter chain to map element based on preset and sliders.
+// -----------------------------------------------------------------------------
     // Live Effects Engine
     const mapEl = document.getElementById('map');
     const filterPreset = document.getElementById('filterPreset');
@@ -557,6 +685,12 @@ const DEFAULTS = Object.freeze({
     $('brightnessVal').addEventListener('input', applyLiveFilters);
     $('saturationVal').addEventListener('input', applyLiveFilters);
 
+
+// -----------------------------------------------------------------------------
+// LABEL VISIBILITY FILTERS
+// Group label layers by role (water, cities, streets, transit, poi, natural).
+// Show/hide labels based on selected filter mode (e.g. cities_only).
+// -----------------------------------------------------------------------------
     // Map Labels Filter
     const textFilter = document.getElementById('textFilter');
     const LABEL_LAYER_GROUPS = Object.freeze({
@@ -612,6 +746,13 @@ const DEFAULTS = Object.freeze({
       setState({ textFilter: readControl('textFilter') });
     });
 
+
+// -----------------------------------------------------------------------------
+// LAYER ROLE MAPPING & TERRAIN
+// Map Carto layer IDs to roles (water, forest, land, etc.).
+// Configure terrain source/layer and hillshade styling.
+// Update terrain colorization overlay when terrain is enabled.
+// -----------------------------------------------------------------------------
     // Global update triggers for initial map sync
     let updateCallbacks = [];
     const CARTO_LAYER_MAP = Object.freeze({
@@ -697,6 +838,12 @@ const DEFAULTS = Object.freeze({
       applyLayerOrder(targetMap, terrainState.layerOrder);
     }
 
+
+// -----------------------------------------------------------------------------
+// LAYER ORDERING
+// Human-readable labels and controls to reorder layer roles.
+// Moves matching MapLibre layers in the render stack.
+// -----------------------------------------------------------------------------
     const LAYER_ORDER_LABELS = Object.freeze({ land: 'Land', terrain: 'Terrain', water: 'Water', forest: 'Nature', landCover: 'Urban', road: 'Roads', boundary: 'Borders', building: 'Buildings' });
     function applyLayerOrder(targetMap = map, order = state.layerOrder) {
       const layers = targetMap.getStyle()?.layers || [];
@@ -738,6 +885,12 @@ const DEFAULTS = Object.freeze({
       renderLayerOrderControls();
     }
 
+
+// -----------------------------------------------------------------------------
+// SCALE BAR & NORTH ARROW
+// Compute real-world scale (meters) for current center/zoom.
+// Render scale overlay and north arrow based on state and bearing.
+// -----------------------------------------------------------------------------
     function getScaleInfo(targetMap = map) {
       const metersPerPixel = (40075016.686 * Math.cos(targetMap.getCenter().lat * Math.PI / 180)) / (512 * 2 ** targetMap.getZoom());
       const targetMeters = metersPerPixel * targetMap.getContainer().clientWidth * 0.2;
@@ -768,6 +921,12 @@ const DEFAULTS = Object.freeze({
       if (unsupported.length) console.warn('Unsupported CARTO layers were left unchanged:', unsupported);
     }
 
+
+// -----------------------------------------------------------------------------
+// COLOR & LAYER CONTROLLERS
+// setupLayerControls: bind color/opacity/toggle inputs to MapLibre paint properties.
+// Handles main vs accent colors for forest/landCover.
+// -----------------------------------------------------------------------------
     // Color & Layer Controllers
     function setupLayerControls(colorId, accentColorId, opacityId, opacityValId, toggleId, role) {
       const colorInput = document.getElementById(colorId);
@@ -824,6 +983,13 @@ const DEFAULTS = Object.freeze({
       updateCallbacks.push(update);
     }
 
+
+// -----------------------------------------------------------------------------
+// COLOR PRESETS
+// Populate preset dropdown from MapArtGenPresetCatalog.
+// applyColorPreset: write preset values to controls and update map layers.
+// Step/randomize buttons for quick design changes.
+// -----------------------------------------------------------------------------
     // Predefined color set definitions
     const colorPresetSelect = controls.colorPresetSelect;
     const predefinedColorSets = window.MapArtGenPresets;
@@ -907,6 +1073,11 @@ const DEFAULTS = Object.freeze({
 
     buildingOutlineToggle.addEventListener('change', updateBuildingOutlineVisibility);
 
+
+// -----------------------------------------------------------------------------
+// BUILDING LAYER CONTROLS
+// Handle building fill color, opacity, visibility, and outline options.
+// -----------------------------------------------------------------------------
     function setupBuildingControls() {
       const fillInput = document.getElementById('buildingColor');
       const opacityInput = document.getElementById('buildingOpacity');
@@ -971,6 +1142,15 @@ const DEFAULTS = Object.freeze({
       updateCallbacks.forEach(cb => cb());
     }
 
+
+// -----------------------------------------------------------------------------
+// MAP LOAD INITIALIZATION
+// When map is ready:
+// - Configure terrain and colorization
+// - Set up layer controls for water/forest/land/landCover/road/boundary
+// - Initialize building controls and apply default preset
+// - Apply layer order and render controls
+// -----------------------------------------------------------------------------
     map.on('load', () => {
       mapReady = true;
       configureTerrain(map);
@@ -1008,6 +1188,13 @@ const DEFAULTS = Object.freeze({
       renderMapAnnotations();
     }));
 
+
+// -----------------------------------------------------------------------------
+// SEARCH & REVERSE GEOCODING (NOMINATIM)
+// Search input with debounced requests to Nominatim.
+// Reverse geocode on map move to update city/country labels.
+// Keyboard navigation in search results.
+// -----------------------------------------------------------------------------
     // Search and reverse geocoding via Nominatim
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
@@ -1211,6 +1398,12 @@ const DEFAULTS = Object.freeze({
       }
     });
 
+
+// -----------------------------------------------------------------------------
+// LABEL OVERLAY & FONT STYLING
+// Controls for label position/style, font, and separate colors
+// for city name, coordinates, and country.
+// -----------------------------------------------------------------------------
     // Text Label Overlay & Font Styling (with 3 separate color fields)
     const mapLabelOverlay = document.getElementById('mapLabelOverlay');
     const labelStyle = document.getElementById('labelStyle');
@@ -1235,6 +1428,12 @@ const DEFAULTS = Object.freeze({
     labelOpacity.addEventListener('input', updateLabelStyle);
     labelFontSelect.addEventListener('change', updateLabelStyle);
 
+
+// -----------------------------------------------------------------------------
+// BORDER & ASPECT RATIO
+// Toggle border, choose color/width, and adjust inner/outer radii.
+// Format select changes aspect ratio and resizes map.
+// -----------------------------------------------------------------------------
     // Border & Aspect Ratio Controls
     const borderCheckbox = document.getElementById('borderCheckbox');
     const borderColor = document.getElementById('borderColor');
@@ -1274,6 +1473,16 @@ const DEFAULTS = Object.freeze({
       return `${yyyy}${mm}${dd}_${hh}${min}${ss}`;
     }
 
+
+// -----------------------------------------------------------------------------
+// HIGH-RES EXPORT ENGINE
+// - Optional Web Worker for PDF generation
+// - Helper to download blobs (images, SVG, PDF, STL, 3MF)
+// - Elevation grid fetch from Terrarium tiles
+// - Terrain mesh generation with buildings/roads/water
+// - STL and colored 3MF export
+// - Canvas/SVG/PDF/image export with labels and annotations
+// -----------------------------------------------------------------------------
     // High-Res Export Engine & Download Handlers
     const exportBtn = document.getElementById('exportBtn');
     let exportWorker = null;
@@ -1995,6 +2204,14 @@ const DEFAULTS = Object.freeze({
       }
     });
 
+
+// -----------------------------------------------------------------------------
+// KEYBOARD SHORTCUTS
+// +/-: fine zoom
+// Ctrl/Cmd+E: trigger export
+// /: focus search
+// 1–9: toggle accordion sections
+// -----------------------------------------------------------------------------
     document.addEventListener('keydown', event => {
       if (event.target.matches('input, select, textarea')) return;
       if (event.key === '+' || event.key === '=') {

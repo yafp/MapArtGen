@@ -1,3 +1,12 @@
+// =============================================================================
+// cartiva -  presets.js (preset catalogue and color definitions)
+// =============================================================================
+
+
+// -----------------------------------------------------------------------------
+// Preset catalogue
+// -----------------------------------------------------------------------------
+// Display metadata used to populate the preset selector.
 window.MapArtGenPresetCatalog = [
   { id: 'alpine', name: 'Alpine Snow' },
   { id: 'amethyst', name: 'Amethyst Glow' },
@@ -213,7 +222,13 @@ window.MapArtGenPresetCatalog = [
   { id: 'pebble-port', name: 'Pebble Port' }
 ];
 
+
+// -----------------------------------------------------------------------------
+// Preset color definitions
+// -----------------------------------------------------------------------------
+// Each preset maps UI control IDs to colors, opacity values, and visibility flags.
 window.MapArtGenPresets = {
+
 
       'positron': {
         waterColor: '#8ab4f8', waterOpacity: '100', waterToggle: true,
@@ -515,7 +530,7 @@ window.MapArtGenPresets = {
         buildingColor: '#cccccc', buildingOpacity: '100', buildingToggle: true,
         buildingOutlineToggle: true, buildingOutlineColor: '#000000'
       },
-      /* 32 Additional Presets */
+
       'alpine': { waterColor: '#7dd3fc', forestColor: '#475569', forestColorAccent: '#475569', landColor: '#f8fafc', landCoverColor: '#e2e8f0', landCoverColorAccent: '#e2e8f0', roadColor: '#1e293b', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
       'baroque': { waterColor: '#b45309', forestColor: '#78350f', forestColorAccent: '#78350f', landColor: '#fef3c7', landCoverColor: '#fde68a', landCoverColorAccent: '#fde68a', roadColor: '#451a03', boundaryColor: '#d97706', buildingColor: '#fcd34d', buildingOutlineColor: '#92400e', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
       'bordeaux': { waterColor: '#38bdf8', forestColor: '#881337', forestColorAccent: '#881337', landColor: '#fff1f2', landCoverColor: '#ffe4e6', landCoverColorAccent: '#ffe4e6', roadColor: '#4c0519', boundaryColor: '#be123c', buildingColor: '#fecdd3', buildingOutlineColor: '#9f1239', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
@@ -548,7 +563,6 @@ window.MapArtGenPresets = {
       'quartz': { waterColor: '#7dd3fc', forestColor: '#cbd5e1', forestColorAccent: '#cbd5e1', landColor: '#f8fafc', landCoverColor: '#f1f5f9', landCoverColorAccent: '#f1f5f9', roadColor: '#334155', boundaryColor: '#94a3b8', buildingColor: '#e2e8f0', buildingOutlineColor: '#cbd5e1', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
       'redwood': { waterColor: '#38bdf8', forestColor: '#7f1d1d', forestColorAccent: '#7f1d1d', landColor: '#fef2f2', landCoverColor: '#fee2e2', landCoverColorAccent: '#fee2e2', roadColor: '#450a0a', boundaryColor: '#dc2626', buildingColor: '#fecaca', buildingOutlineColor: '#b91c1c', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
       'tundra': { waterColor: '#38bdf8', forestColor: '#475569', forestColorAccent: '#475569', landColor: '#f1f5f9', landCoverColor: '#e2e8f0', landCoverColorAccent: '#e2e8f0', roadColor: '#1e293b', boundaryColor: '#64748b', buildingColor: '#cbd5e1', buildingOutlineColor: '#475569', waterOpacity: '100', forestOpacity: '100', landOpacity: '100', landCoverOpacity: '100', roadOpacity: '100', boundaryOpacity: '100', buildingOpacity: '100', waterToggle: true, forestToggle: true, landToggle: true, landCoverToggle: true, roadToggle: true, boundaryToggle: true, buildingToggle: true, buildingOutlineToggle: true },
-      /* Expanded palette collection */
       'arctic-archipelago': { waterColor: '#2864b4', waterOpacity: '100', waterToggle: true, forestColor: '#14502d', forestColorAccent: '#37824b', forestOpacity: '100', forestToggle: true, landColor: '#e1ebd7', landOpacity: '100', landToggle: true, landCoverColor: '#cdd7c3', landCoverColorAccent: '#b9c8af', landCoverOpacity: '100', landCoverToggle: true, roadColor: '#2d2337', roadOpacity: '100', roadToggle: true, boundaryColor: '#785064', boundaryOpacity: '100', boundaryToggle: true, buildingColor: '#afa59b', buildingOpacity: '100', buildingToggle: true, buildingOutlineToggle: true, buildingOutlineColor: '#55464b' },
       'arctic-badlands': { waterColor: '#396bbf', waterOpacity: '100', waterToggle: true, forestColor: '#216330', forestColorAccent: '#409350', forestOpacity: '100', forestToggle: true, landColor: '#e4f0de', landOpacity: '100', landToggle: true, landCoverColor: '#d2dece', landCoverColorAccent: '#c0d1bc', landCoverOpacity: '100', landCoverToggle: true, roadColor: '#382a3c', roadOpacity: '100', roadToggle: true, boundaryColor: '#855b6b', boundaryOpacity: '100', boundaryToggle: true, buildingColor: '#b4aea6', buildingOpacity: '100', buildingToggle: true, buildingOutlineToggle: true, buildingOutlineColor: '#5c5354' },
       'arctic-delta': { waterColor: '#4a72ca', waterOpacity: '100', waterToggle: true, forestColor: '#2e7633', forestColorAccent: '#49a455', forestOpacity: '100', forestToggle: true, landColor: '#e7f5e5', landOpacity: '100', landToggle: true, landCoverColor: '#d7e5d9', landCoverColorAccent: '#c7dac9', landCoverOpacity: '100', landCoverToggle: true, roadColor: '#433141', roadOpacity: '100', roadToggle: true, boundaryColor: '#926672', boundaryOpacity: '100', boundaryToggle: true, buildingColor: '#b9b7b1', buildingOpacity: '100', buildingToggle: true, buildingOutlineToggle: true, buildingOutlineColor: '#63605d' },
@@ -712,7 +726,8 @@ window.MapArtGenPresets = {
           buildingColor: landCoverColor, buildingOpacity: '100', buildingToggle: true,
           buildingOutlineToggle: true, buildingOutlineColor: roadColor
         }
-      ]))
+      ]))
+
 };
 
-
+// End of preset catalogue and color definitions.
