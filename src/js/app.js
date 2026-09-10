@@ -606,7 +606,6 @@ const DEFAULTS = Object.freeze({
       writeControl('stlRoadsToggle', DEFAULTS.stlRoadsEnabled);
       writeControl('scaleToggle', DEFAULTS.scaleEnabled);
       writeControl('northToggle', DEFAULTS.northEnabled);
-      updateBuildingOutlineVisibility();
       updateBorderElementsVisibility();
       updateLabelStyle();
       updateBorderStyle();
@@ -1165,7 +1164,6 @@ const DEFAULTS = Object.freeze({
       state.preset = presetName;
       state.layers = { ...set };
 
-      updateBuildingOutlineVisibility();
       triggerAllLayerUpdates();
       syncStateFromControls();
       applyTextFilters(map, state.textFilter);
@@ -1224,9 +1222,8 @@ const DEFAULTS = Object.freeze({
 
     const buildingOutlineToggle = document.getElementById('buildingOutlineToggle');
 
-    function updateBuildingOutlineVisibility() {}
+    
 
-    buildingOutlineToggle.addEventListener('change', updateBuildingOutlineVisibility);
 
 
 // -----------------------------------------------------------------------------
