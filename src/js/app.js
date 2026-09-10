@@ -7,7 +7,7 @@
 const APP = {
   NAME: "cartiva",
   DESCRIPTION: "a small, self-contained creative cartography web-app",
-  VERSION: "2026.09.08.214500", // yyyy.mm.dd.HHMMSS
+  VERSION: "2026.09.10.211600", // yyyy.mm.dd.HHMMSS
   GITHUBLINK: "https://github.com/yafp/cartiva"
 };
 
@@ -42,6 +42,109 @@ if (appGithubLink) {
 }
 
 
+
+
+// -----------------------------------------------------------------------------
+// START LOCATION & PERSISTENCE
+// First-time visitors receive a random, curated larger city with prominent
+// river, lake, harbor, or coastal geography. Returning visitors resume the
+// last successfully used map location stored in this browser.
+// -----------------------------------------------------------------------------
+const LAST_LOCATION_STORAGE_KEY = 'cartiva.lastLocation';
+const STARTER_CITIES = Object.freeze([
+  { city: 'AMSTERDAM', country: 'NETHERLANDS', center: [4.9041, 52.3676], zoom: 12 },
+  { city: 'HAMBURG', country: 'GERMANY', center: [9.9937, 53.5511], zoom: 12 },
+  { city: 'LONDON', country: 'UNITED KINGDOM', center: [-0.1276, 51.5074], zoom: 11.5 },
+  { city: 'PARIS', country: 'FRANCE', center: [2.3522, 48.8566], zoom: 12 },
+  { city: 'VIENNA', country: 'AUSTRIA', center: [16.3738, 48.2082], zoom: 12 },
+  { city: 'BUDAPEST', country: 'HUNGARY', center: [19.0402, 47.4979], zoom: 12 },
+  { city: 'PRAGUE', country: 'CZECHIA', center: [14.4378, 50.0755], zoom: 12 },
+  { city: 'STOCKHOLM', country: 'SWEDEN', center: [18.0686, 59.3293], zoom: 12 },
+  { city: 'COPENHAGEN', country: 'DENMARK', center: [12.5683, 55.6761], zoom: 12 },
+  { city: 'LISBON', country: 'PORTUGAL', center: [-9.1393, 38.7223], zoom: 12 },
+  { city: 'PORTO', country: 'PORTUGAL', center: [-8.6291, 41.1579], zoom: 12 },
+  { city: 'VANCOUVER', country: 'CANADA', center: [-123.1207, 49.2827], zoom: 12 },
+  { city: 'CHICAGO', country: 'UNITED STATES', center: [-87.6298, 41.8781], zoom: 11.5 },
+  { city: 'NEW YORK', country: 'UNITED STATES', center: [-74.0060, 40.7128], zoom: 11 },
+  { city: 'SINGAPORE', country: 'SINGAPORE', center: [103.8198, 1.3521], zoom: 11 },
+  { city: 'SYDNEY', country: 'AUSTRALIA', center: [151.2093, -33.8688], zoom: 11.5 }
+]);
+
+function getStoredLocation() {
+  try {
+    const value = JSON.parse(localStorage.getItem(LAST_LOCATION_STORAGE_KEY));
+    const validCenter = Array.isArray(value?.center)
+      && value.center.length === 2
+      && value.center.every(Number.isFinite);
+    if (!validCenter || !Number.isFinite(value?.zoom)) return null;
+    return {
+      city: String(value.city || 'MAP LOCATION').toUpperCase(),
+      country: String(value.country || '').toUpperCase(),
+      center: value.center,
+      zoom: value.zoom,
+      bearing: Number.isFinite(value.bearing) ? value.bearing : 0,
+      pitch: Number.isFinite(value.pitch) ? value.pitch : 0
+    };
+  } catch (error) {
+    console.warn('The saved cartiva location could not be read.', error);
+    return null;
+  }
+}
+
+function getRandomStarterCity() {
+  return STARTER_CITIES[Math.floor(Math.random() * STARTER_CITIES.length)];
+}
+
+const START_LOCATION = getStoredLocation() || getRandomStarterCity();
+
+function saveLastLocation() {
+  try {
+    const center = map.getCenter();
+    localStorage.setItem(LAST_LOCATION_STORAGE_KEY, JSON.stringify({
+      city: cityNameEl.textContent,
+      country: cityCountryEl.textContent,
+      center: [center.lng, center.lat],
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch()
+    }));
+  } catch (error) {
+    console.warn('The current cartiva location could not be saved.', error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// NATIVE SHARING
+// Show the minimal share control only when the browser exposes Web Share.
+// navigator.share opens the native share sheet on supported mobile and desktop
+// browsers. Sharing the canonical page URL avoids including temporary hashes.
+// -----------------------------------------------------------------------------
+const shareBtn = document.getElementById('shareBtn');
+const shareData = {
+  title: APP.NAME,
+  text: `Create your own map art with ${APP.NAME}.`,
+  url: window.location.href
+};
+
+// Feature detection keeps the control invisible on unsupported browsers.
+// canShare is used when available to verify this exact payload.
+const sharingSupported = typeof navigator.share === 'function'
+  && (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
+
+if (shareBtn && sharingSupported) {
+  shareBtn.hidden = false;
+  shareBtn.addEventListener('click', async () => {
+    try {
+      // Must run directly within the click handler to preserve user activation.
+      await navigator.share(shareData);
+    } catch (error) {
+      // AbortError means the user intentionally closed the native share dialog.
+      if (error.name !== 'AbortError') {
+        console.warn('Sharing cartiva failed.', error);
+      }
+    }
+  });
+}
 
 // -----------------------------------------------------------------------------
 // DEFAULT CONFIGURATION
@@ -79,13 +182,13 @@ const DEFAULTS = Object.freeze({
 // -----------------------------------------------------------------------------
     const state = {
       ...DEFAULTS,
-      center: [8.69079, 49.40768],
-      zoom: 13,
-      bearing: 0,
-      pitch: 0,
-      city: 'HEIDELBERG',
-      coordinates: '49.4077° N / 8.6908° E',
-      country: 'GERMANY',
+      center: [...START_LOCATION.center],
+      zoom: START_LOCATION.zoom,
+      bearing: START_LOCATION.bearing || 0,
+      pitch: START_LOCATION.pitch || 0,
+      city: START_LOCATION.city,
+      coordinates: '',
+      country: START_LOCATION.country,
       layers: {}
     };
 
@@ -482,7 +585,9 @@ const DEFAULTS = Object.freeze({
       document.getElementById('boundaryColor').value = "#9ca3af";
       document.getElementById('borderWidth').value = "16";
       document.getElementById('borderWidthVal').textContent = "16";
-      document.getElementById('searchInput').value = "Heidelberg";
+      document.getElementById('searchInput').value = START_LOCATION.city;
+      document.getElementById('cityName').textContent = START_LOCATION.city;
+      document.getElementById('cityCountry').textContent = START_LOCATION.country;
       document.getElementById('colorPresetSelect').value = DEFAULTS.preset;
       document.getElementById('labelStyle').value = DEFAULTS.labelStyle;
       document.getElementById('labelOpacity').value = DEFAULTS.labelOpacity;
@@ -566,17 +671,19 @@ const DEFAULTS = Object.freeze({
 
 // -----------------------------------------------------------------------------
 // MAPLIBRE MAP INITIALIZATION
-// Create map centered on Heidelberg with CartoDB Positron style.
+// Create map at the restored or randomly selected starter location.
 // Attach move/zoom/moveend handlers for UI updates and terrain refresh.
 // -----------------------------------------------------------------------------
-    // MapLibre Map Initialization preset centered to Heidelberg
+    // MapLibre initialization using the restored or random starter location
     const map = new maplibregl.Map({
       container: 'map',
       preserveDrawingBuffer: true,
       attributionControl: false,
       style: MAP_STYLE_URL,
-      center: [8.69079, 49.40768],
-      zoom: 13
+      center: START_LOCATION.center,
+      zoom: START_LOCATION.zoom,
+      bearing: START_LOCATION.bearing || 0,
+      pitch: START_LOCATION.pitch || 0
     });
     const zoomLevelDisplay = $('zoomLevelDisplay');
     function updateZoomLevelDisplay() {
@@ -590,7 +697,10 @@ const DEFAULTS = Object.freeze({
       triggerAllLayerUpdates();
       applyTextFilters(map, readControl('textFilter'));
     });
-    map.on('moveend', syncStateFromControls);
+    map.on('moveend', () => {
+      syncStateFromControls();
+      saveLastLocation();
+    });
     let terrainRefreshTimer;
     map.on('moveend', () => {
       clearTimeout(terrainRefreshTimer);
@@ -1287,6 +1397,7 @@ const DEFAULTS = Object.freeze({
       setSearchResultsVisible(false);
       setStatus('');
       syncStateFromControls();
+      saveLastLocation();
     }
 
     function renderSearchResults(data) {
@@ -1355,6 +1466,7 @@ const DEFAULTS = Object.freeze({
         }
         if (data.address?.country) cityCountryEl.textContent = data.address.country.toUpperCase();
         syncStateFromControls();
+        saveLastLocation();
       } catch (error) {
         if (error.name !== 'AbortError') {
           setStatus(`Location update failed: ${error.message}`, true);
@@ -2134,7 +2246,7 @@ const DEFAULTS = Object.freeze({
       drawExportAnnotations(ctx, exportState, targetDims.width, targetDims.height, mapWidth, bWidth);
 
         const mimeType = exportState.exportType;
-        const baseFilename = `MapArtGen_${exportState.city.trim().replace(/\s+/g, '_')}_${exportState.exportDpi}dpi_${getFileTimestamp()}`;
+        const baseFilename = `cartiva_${exportState.city.trim().replace(/\s+/g, '_')}_${exportState.exportDpi}dpi_${getFileTimestamp()}`;
         setStatus('4/5 Encoding output...');
         if (mimeType === 'image/svg+xml') {
           downloadBlob(new Blob([canvasToSvg(exportCanvas, exportState)], { type: mimeType }), `${baseFilename}.svg`);
@@ -2208,7 +2320,7 @@ const DEFAULTS = Object.freeze({
           map.getBearing()
         );
         const model = createTerrainStl(mesh);
-        const name = `MapArtGen_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.stl`;
+        const name = `cartiva_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.stl`;
         downloadBlob(model, name);
         setStatus('3D model exported.');
       } catch (error) {
@@ -2238,7 +2350,7 @@ const DEFAULTS = Object.freeze({
           road: state.layers.roadColor,
           water: state.layers.waterColor
         });
-        const name = `MapArtGen_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.3mf`;
+        const name = `cartiva_${state.city.trim().replace(/\s+/g, '_')}_${getFileTimestamp()}.3mf`;
         downloadBlob(model, name);
         setStatus('Colored 3D model exported.');
       } catch (error) {

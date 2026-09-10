@@ -55,7 +55,7 @@
           <div class="section-body">
             <div class="control-group">
               <div class="location-search-row">
-                <input type="text" id="searchInput" value="Heidelberg" placeholder="Search city / location..." autocomplete="off" title="Type to query worldwide locations via Nominatim" role="combobox" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false">
+                <input type="text" id="searchInput" value="" placeholder="Search city / location..." autocomplete="off" title="Type to query worldwide locations via Nominatim" role="combobox" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false">
                 <button type="button" id="searchBtn" class="location-search-btn" title="Search location" aria-label="Search location"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m15.5 15.5 5 5"></path></svg></button>
               </div>
               <div id="searchResults" class="search-results" role="listbox" aria-label="Location suggestions"></div>
@@ -603,6 +603,16 @@
 
   <!-- Main Viewport Area -->
   <div class="stage">
+    <!-- Native sharing is progressively enhanced and remains hidden when unsupported. -->
+    <button type="button" id="shareBtn" class="share-btn" title="Recommend cartiva" aria-label="Recommend cartiva" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"></circle>
+        <circle cx="6" cy="12" r="3"></circle>
+        <circle cx="18" cy="19" r="3"></circle>
+        <path d="m8.6 10.5 6.8-4"></path>
+        <path d="m8.6 13.5 6.8 4"></path>
+      </svg>
+    </button>
     <!-- Floating Zoom Controls (4 buttons + Magnifier toggle) -->
     <div class="map-zoom-controls">
       <button type="button" id="zoomInBigBtn" class="map-zoom-btn" title="Zoom In (Big Steps)" aria-label="Zoom in by two levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path><path d="M18 3v6M15 6h6"></path></svg></button>
@@ -644,9 +654,9 @@
 
       <!-- Dynamic Label Overlay -->
         <div id="mapLabelOverlay" class="map-label-overlay corner-bottom-right">
-          <div id="cityName" class="map-label-city">HEIDELBERG</div>
+          <div id="cityName" class="map-label-city">MAP LOCATION</div>
           <div id="cityCoords" class="map-label-coords">49.4077° N / 8.6908° E</div>
-          <div id="cityCountry" class="map-label-country">GERMANY</div>
+          <div id="cityCountry" class="map-label-country"></div>
         </div>
         <div id="mapScaleOverlay" class="map-scale-overlay" aria-hidden="true"><span></span></div>
         <div id="northOverlay" class="north-overlay" aria-hidden="true"><span>N</span><svg viewBox="0 0 24 24"><path d="M12 2 7 17l5-3 5 3L12 2Z"></path></svg></div>
