@@ -13,9 +13,13 @@ Inspired by [Urbanmapdesign.com](https://www.urbanmapdesign.com).
 You can find a live demo of the latest released version on [Github Pages](https://yafp.github.io/cartiva/index.html)
 
 ## Usage
+### Locally
 - Download [latest release](https://github.com/yafp/cartiva/releases)
 - Extract
 - Double-click the .html file within the `src` folder
+
+### As a service
+Just use the demo linked above.
 
 ## Developers
 ### Structure
