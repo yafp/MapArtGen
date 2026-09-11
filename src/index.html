@@ -541,7 +541,7 @@
         <div class="section-block collapsed" title="Miscellaneous configuration options">
           <div class="section-header">
             <span class="section-header-title">
-              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83l2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"></path></svg>
               10. Misc
             </span>
           </div>
@@ -572,17 +572,25 @@
       <!-- Export Button & Metadata Footer -->
       <div class="sidebar-footer">
         <button type="button" class="export-btn" id="exportBtn" title="Generate and download high-resolution poster image and configuration file">
-          <span id="exportBtnLabel">Export image</span>
+          <span id="imageExportBtnLabel">Export image</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </button>
         <button type="button" class="secondary-action-btn" id="stlExportBtn" title="Generate an STL terrain model of the visible map area for 3D printing">
-			<span id="exportBtnLabel">Export 3D model (.stl)</span>
+            <span id="stlExportBtnLabel">Export 3D model (.stl)</span>
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
 		</button>
         <button type="button" class="secondary-action-btn" id="threeMfExportBtn" title="Generate a colored 3MF terrain model using the selected map colors">
-			<span id="exportBtnLabel">Export 3D model (.3mf)</span>
+            <span id="threeMfExportBtnLabel">Export 3D model (.3mf)</span>
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
 		</button>
+    <div class="project-actions" aria-label="Project actions">
+      <button type="button" class="secondary-action-btn" id="saveProjectBtn" title="Save the current design in this browser">Save project</button>
+      <button type="button" class="secondary-action-btn" id="downloadProjectBtn" title="Download the current design as JSON">Download project</button>
+      <button type="button" class="secondary-action-btn" id="loadProjectBtn" title="Load a project JSON file">Load project</button>
+      <button type="button" class="secondary-action-btn" id="savePresetBtn" title="Save the current design as a reusable preset">Save preset</button>
+      <button type="button" class="secondary-action-btn" id="loadPresetBtn" title="Load a saved reusable preset">Load preset</button>
+      <input type="file" id="projectFileInput" accept="application/json,.json" hidden>
+    </div>
 		
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
@@ -662,7 +670,22 @@
   </div>
   
   <!-- Loading cartiva javascript files -->
-  <script src="js/presets.js"></script>
+  <script src="js/core/service-config.js"></script>
+  <script src="js/core/state-store.js"></script>
+  <script src="js/core/project-service.js"></script>
+  <script src="js/core/resource-cache.js"></script>
+  <script src="js/core/diagnostics.js"></script>
+  <script src="js/map/layer-registry.js"></script>
+  <script src="js/map/style-adapter.js"></script>
+  <script src="js/services/geocoder.js"></script>
+  <script src="js/preset-data.js"></script>
+  <script src="js/presets/preset-service.js"></script>
+  <script src="js/export/export-contract.js"></script>
+  <script src="js/pdf-exporter.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/location.js"></script>
+  <script src="js/export.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

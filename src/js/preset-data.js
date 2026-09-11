@@ -1,5 +1,5 @@
 // =============================================================================
-// cartiva -  presets.js (preset catalogue and color definitions)
+// cartiva - preset-data.js (preset catalogue and color definitions)
 // =============================================================================
 
 
@@ -7,7 +7,7 @@
 // Preset catalogue
 // -----------------------------------------------------------------------------
 // Display metadata used to populate the preset selector.
-window.MapArtGenPresetCatalog = [
+window.CartivaPresetCatalog = [
   {
     id: 'alpine',
     name: 'Alpine Snow'
@@ -862,7 +862,7 @@ window.MapArtGenPresetCatalog = [
 // Each preset maps UI control IDs to colors, opacity values, and visibility flags.
 // Preset definitions are kept in one shared object so the UI and rendering
 // logic can use the same values without duplicating color settings.
-window.MapArtGenPresets = {
+window.CartivaPresetData = {
 
 
       'positron': {

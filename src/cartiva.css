@@ -62,6 +62,7 @@ input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 3px; }
 .search-item:hover, .search-item.active { background-color: #e5e7eb; }
 .search-message { padding: 8px; color: #6b7280; font-size: .75rem; }
 .sidebar-footer { padding-top: 8px; border-top: 1px solid #e5e7eb; margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
+.project-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 button.export-btn { background-color: #059669; color: #fff; font-weight: 700; border: 0; cursor: pointer; padding: 8px 10px; border-radius: 5px; width: 100%; font-size: .85rem; transition: background .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); display: flex; align-items: center; justify-content: center; gap: 8px; }
 button.export-btn:hover { background-color: #047857; }
 button.export-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }

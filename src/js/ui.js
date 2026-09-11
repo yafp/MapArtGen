@@ -1,0 +1,830 @@
+// =============================================================================
+// cartiva - app.js
+// =============================================================================
+
+
+// All basic app constants - as 1 object
+const APP = {
+  NAME: "cartiva",
+  DESCRIPTION: "a small, self-contained creative cartography web-app",
+  VERSION: "2026.09.10.211600", // yyyy.mm.dd.HHMMSS
+  GITHUBLINK: "https://github.com/yafp/cartiva"
+};
+
+
+// Init some values in the UI with constants
+// 
+// Tab title
+document.title = `${APP.NAME} - ${APP.DESCRIPTION} - v${APP.VERSION}`;
+
+// AppName
+const heading = document.getElementById('appName');
+if (heading) {
+  heading.textContent = `${APP.NAME}`;
+}
+
+// AppDescription
+const appDescription = document.getElementById('appDescription');
+if (appDescription) {
+  appDescription.textContent = `${APP.DESCRIPTION}`;
+}
+
+// AppVersion
+const appVersion = document.getElementById('appVersion');
+if (appVersion) {
+  appVersion.textContent = `${APP.VERSION}`;
+}
+
+// AppGithubLink
+const appGithubLink = document.getElementById('appGithubLink');
+if (appGithubLink) {
+  appGithubLink.href = `${APP.GITHUBLINK}`;
+}
+
+
+
+
+// -----------------------------------------------------------------------------
+// START LOCATION & PERSISTENCE
+// First-time visitors receive a random, curated larger city with prominent
+// river, lake, harbor, or coastal geography. Returning visitors resume the
+// last successfully used map location stored in this browser.
+// -----------------------------------------------------------------------------
+const LAST_LOCATION_STORAGE_KEY = 'cartiva.lastLocation';
+const STARTER_CITIES = Object.freeze([
+  { city: 'AMSTERDAM', country: 'NETHERLANDS', center: [4.9041, 52.3676], zoom: 12 },
+  { city: 'HAMBURG', country: 'GERMANY', center: [9.9937, 53.5511], zoom: 12 },
+  { city: 'LONDON', country: 'UNITED KINGDOM', center: [-0.1276, 51.5074], zoom: 11.5 },
+  { city: 'PARIS', country: 'FRANCE', center: [2.3522, 48.8566], zoom: 12 },
+  { city: 'VIENNA', country: 'AUSTRIA', center: [16.3738, 48.2082], zoom: 12 },
+  { city: 'BUDAPEST', country: 'HUNGARY', center: [19.0402, 47.4979], zoom: 12 },
+  { city: 'PRAGUE', country: 'CZECHIA', center: [14.4378, 50.0755], zoom: 12 },
+  { city: 'STOCKHOLM', country: 'SWEDEN', center: [18.0686, 59.3293], zoom: 12 },
+  { city: 'COPENHAGEN', country: 'DENMARK', center: [12.5683, 55.6761], zoom: 12 },
+  { city: 'LISBON', country: 'PORTUGAL', center: [-9.1393, 38.7223], zoom: 12 },
+  { city: 'PORTO', country: 'PORTUGAL', center: [-8.6291, 41.1579], zoom: 12 },
+  { city: 'VANCOUVER', country: 'CANADA', center: [-123.1207, 49.2827], zoom: 12 },
+  { city: 'CHICAGO', country: 'UNITED STATES', center: [-87.6298, 41.8781], zoom: 11.5 },
+  { city: 'NEW YORK', country: 'UNITED STATES', center: [-74.0060, 40.7128], zoom: 11 },
+  { city: 'SINGAPORE', country: 'SINGAPORE', center: [103.8198, 1.3521], zoom: 11 },
+  { city: 'SYDNEY', country: 'AUSTRALIA', center: [151.2093, -33.8688], zoom: 11.5 }
+]);
+
+function getStoredLocation() {
+  try {
+    const value = JSON.parse(localStorage.getItem(LAST_LOCATION_STORAGE_KEY));
+    const validCenter = Array.isArray(value?.center)
+      && value.center.length === 2
+      && value.center.every(Number.isFinite);
+    if (!validCenter || !Number.isFinite(value?.zoom)) return null;
+    return {
+      city: String(value.city || 'MAP LOCATION').toUpperCase(),
+      country: String(value.country || '').toUpperCase(),
+      center: value.center,
+      zoom: value.zoom,
+      bearing: Number.isFinite(value.bearing) ? value.bearing : 0,
+      pitch: Number.isFinite(value.pitch) ? value.pitch : 0
+    };
+  } catch (error) {
+    console.warn('The saved cartiva location could not be read.', error);
+    return null;
+  }
+}
+
+function getRandomStarterCity() {
+  return STARTER_CITIES[Math.floor(Math.random() * STARTER_CITIES.length)];
+}
+
+const START_LOCATION = getStoredLocation() || getRandomStarterCity();
+
+function saveLastLocation() {
+  try {
+    const center = map.getCenter();
+    localStorage.setItem(LAST_LOCATION_STORAGE_KEY, JSON.stringify({
+      city: cityNameEl.textContent,
+      country: cityCountryEl.textContent,
+      center: [center.lng, center.lat],
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch()
+    }));
+  } catch (error) {
+    console.warn('The current cartiva location could not be saved.', error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// NATIVE SHARING
+// Show the minimal share control only when the browser exposes Web Share.
+// navigator.share opens the native share sheet on supported mobile and desktop
+// browsers. Sharing the canonical page URL avoids including temporary hashes.
+// -----------------------------------------------------------------------------
+const shareBtn = document.getElementById('shareBtn');
+const shareData = {
+  title: APP.NAME,
+  text: `Create your own map art with ${APP.NAME}.`,
+  url: window.location.href
+};
+
+// Feature detection keeps the control invisible on unsupported browsers.
+// canShare is used when available to verify this exact payload.
+const sharingSupported = typeof navigator.share === 'function'
+  && (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
+
+if (shareBtn && sharingSupported) {
+  shareBtn.hidden = false;
+  shareBtn.addEventListener('click', async () => {
+    try {
+      // Must run directly within the click handler to preserve user activation.
+      await navigator.share(shareData);
+    } catch (error) {
+      // AbortError means the user intentionally closed the native share dialog.
+      if (error.name !== 'AbortError') {
+        console.warn('Sharing cartiva failed.', error);
+      }
+    }
+  });
+}
+
+// -----------------------------------------------------------------------------
+// DEFAULT CONFIGURATION
+// Frozen object with default values for presets, labels, export, filters,
+// terrain, STL options, and layer ordering.
+// -----------------------------------------------------------------------------
+const DEFAULTS = Object.freeze({
+      preset: 'alpine',
+      labelStyle: 'corner-bottom-right',
+      labelOpacity: '100',
+      textFilter: 'none',
+      format: 'a4-portrait',
+      exportType: 'image/png',
+      exportDpi: 300,
+      filterPreset: 'none',
+      contrast: 100,
+      brightness: 100,
+      saturation: 100,
+      shape: 'none',
+      shapeColor: '#ffffff',
+      terrainEnabled: false,
+      mountainColor: '#64748b',
+      terrainExaggeration: 100,
+      stlBuildingsEnabled: true,
+      stlRoadsEnabled: true,
+      scaleEnabled: false,
+      northEnabled: false,
+      layerOrder: ['land', 'water', 'forest', 'landCover', 'terrain', 'road', 'boundary', 'building']
+    });
+
+// -----------------------------------------------------------------------------
+// APPLICATION STATE
+// Mutable state initialized from DEFAULTS and extended with map/location data.
+// Updated as the user interacts with controls and the map.
+// -----------------------------------------------------------------------------
+    const state = {
+      ...DEFAULTS,
+      center: [...START_LOCATION.center],
+      zoom: START_LOCATION.zoom,
+      bearing: START_LOCATION.bearing || 0,
+      pitch: START_LOCATION.pitch || 0,
+      city: START_LOCATION.city,
+      coordinates: '',
+      country: START_LOCATION.country,
+      layers: {}
+    };
+    const stateStore = CartivaState.createStore(state);
+
+// -----------------------------------------------------------------------------
+// DOM CONTROL CACHE
+// Build a frozen map from element id → element for fast lookup.
+// -----------------------------------------------------------------------------
+    const controls = Object.freeze(Object.fromEntries(
+      Array.from(document.querySelectorAll('[id]'), element => [element.id, element])
+    ));
+
+// -----------------------------------------------------------------------------
+// HELPER: SHORT $() FOR GETTING CONTROLS BY ID
+// Returns the cached element or null if not found.
+// -----------------------------------------------------------------------------
+    const $ = id => controls[id] || null;
+
+// -----------------------------------------------------------------------------
+
+// OUTPUT DIMENSIONS MAP
+// Pixel dimensions for each paper format at 300 DPI.
+// Scaled later according to the chosen export DPI.
+// -----------------------------------------------------------------------------
+    const dimsMap = {
+      'a2-portrait': { width: 4961, height: 7016 },
+      'a2-landscape': { width: 7016, height: 4961 },
+      'a3-portrait': { width: 3508, height: 4961 },
+      'a3-landscape': { width: 4961, height: 3508 },
+      'a4-portrait': { width: 2480, height: 3508 },
+      'a4-landscape': { width: 3508, height: 2480 },
+      'a5-portrait': { width: 1748, height: 2480 },
+      'a5-landscape': { width: 2480, height: 1748 },
+      'square-large': { width: 4961, height: 4961 },
+      'square-medium': { width: 3508, height: 3508 },
+      'square-small': { width: 2480, height: 2480 }
+    };
+
+
+// -----------------------------------------------------------------------------
+// CONTROL HELPERS: READ/WRITE
+// readControl: get value (boolean for checkbox, string otherwise).
+// writeControl: set value (boolean for checkbox, string otherwise).
+// -----------------------------------------------------------------------------
+    function readControl(id) {
+      const control = $(id);
+      if (!control) {
+        throw new Error(`Missing required control: #${id}`);
+      }
+      return control.type === 'checkbox' ? control.checked : control.value;
+    }
+
+    function writeControl(id, value) {
+      const control = $(id);
+      if (!control) {
+        throw new Error(`Missing required control: #${id}`);
+      }
+      if (control.type === 'checkbox') control.checked = Boolean(value);
+      else control.value = value;
+    }
+
+
+// -----------------------------------------------------------------------------
+// STATE SYNC FROM UI
+// Reads all relevant controls and updates the global `state` object.
+// Also captures map camera state if `map` exists.
+// -----------------------------------------------------------------------------
+    function syncStateFromControls() {
+      state.format = readControl('formatSelect');
+      state.exportType = readControl('exportType');
+      state.exportDpi = Number(readControl('exportDpi'));
+      state.preset = readControl('colorPresetSelect');
+      state.labelStyle = readControl('labelStyle');
+      state.labelOpacity = Number(readControl('labelOpacity'));
+      state.labelFont = readControl('labelFontSelect');
+      state.labelTextColor = readControl('labelTextColor');
+      state.labelCoordColor = readControl('labelCoordColor');
+      state.labelCountryColor = readControl('labelCountryColor');
+      state.labelBgColor = readControl('labelBgColor');
+      state.textFilter = readControl('textFilter');
+      state.filterPreset = readControl('filterPreset');
+      state.contrast = Number(readControl('contrastVal'));
+      state.brightness = Number(readControl('brightnessVal'));
+      state.saturation = Number(readControl('saturationVal'));
+      state.shape = readControl('shapeSelect');
+      state.shapeColor = readControl('shapeColor');
+      state.terrainEnabled = readControl('terrainToggle');
+      state.mountainColor = readControl('mountainColor');
+      state.terrainExaggeration = Number(readControl('terrainExaggeration'));
+      state.stlBuildingsEnabled = readControl('stlBuildingsToggle');
+      state.stlRoadsEnabled = readControl('stlRoadsToggle');
+      state.scaleEnabled = readControl('scaleToggle');
+      state.northEnabled = readControl('northToggle');
+      state.borderEnabled = readControl('borderCheckbox');
+      state.borderColor = readControl('borderColor');
+      state.borderWidth = Number(readControl('borderWidth'));
+      state.outerBorderRadius = Number(readControl('outerBorderRadius'));
+      state.innerBorderRadius = Number(readControl('innerBorderRadius'));
+      [
+        'waterColor', 'waterOpacity', 'waterToggle',
+        'forestColor', 'forestColorAccent', 'forestOpacity', 'forestToggle',
+        'landColor', 'landOpacity', 'landToggle',
+        'landCoverColor', 'landCoverColorAccent', 'landCoverOpacity', 'landCoverToggle',
+        'roadColor', 'roadOpacity', 'roadToggle',
+        'boundaryColor', 'boundaryOpacity', 'boundaryToggle',
+        'buildingColor', 'buildingOpacity', 'buildingToggle',
+        'buildingOutlineToggle', 'buildingOutlineColor'
+      ].forEach(id => {
+        state.layers[id] = readControl(id);
+      });
+      state.city = $('cityName').textContent;
+      state.coordinates = $('cityCoords').textContent;
+      state.country = $('cityCountry').textContent;
+      if (typeof map !== 'undefined') {
+        state.center = map.getCenter().toArray();
+        state.zoom = map.getZoom();
+        state.bearing = map.getBearing();
+        state.pitch = map.getPitch();
+      }
+      return state;
+    }
+
+
+// -----------------------------------------------------------------------------
+
+// STATE PATCH HELPER
+// Applies a partial update to `state` and optionally re-renders preview.
+// -----------------------------------------------------------------------------
+    function setState(patch, { render = true } = {}) {
+      stateStore.patch(patch, { notify: false });
+      if (render) renderPreview();
+    }
+
+
+// -----------------------------------------------------------------------------
+// DIMENSION CALCULATIONS
+// Compute target export size (px) for a given format and DPI.
+// Update on-screen dimension readout.
+// -----------------------------------------------------------------------------
+    function getTargetDimensions(format = readControl('formatSelect'), dpi = Number(readControl('exportDpi'))) {
+      const baseDims = dimsMap[format];
+      if (!baseDims) throw new Error('Unsupported output format.');
+      const scale = dpi / 300;
+      return {
+        width: Math.round(baseDims.width * scale),
+        height: Math.round(baseDims.height * scale)
+      };
+    }
+
+    function updateOutputDimensions() {
+      const dimensions = getTargetDimensions();
+      $('outputDimensions').textContent = `${dimensions.width} × ${dimensions.height} px`;
+    }
+
+
+// -----------------------------------------------------------------------------
+// CONTRAST & ACCESSIBILITY
+// relativeLuminance: WCAG-style luminance calculation for a hex color.
+// updateContrastWarning: compute text/background contrast and show warning.
+// -----------------------------------------------------------------------------
+    function relativeLuminance(hex) {
+      const channels = [1, 3, 5].map(index => {
+        const value = parseInt(hex.slice(index, index + 2), 16) / 255;
+        return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    }
+
+    function updateContrastWarning() {
+      const background = relativeLuminance(state.labelBgColor);
+      const ratios = [state.labelTextColor, state.labelCoordColor, state.labelCountryColor].map(color => {
+        const foreground = relativeLuminance(color);
+        return (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
+      });
+      const minimum = Math.min(...ratios);
+      const warning = $('contrastWarning');
+      const passes = minimum >= 4.5 || state.labelStyle === 'none' || state.labelOpacity < 50;
+      warning.textContent = passes
+        ? `Text contrast: ${minimum.toFixed(1)}:1`
+        : `Low text contrast: ${minimum.toFixed(1)}:1 (aim for 4.5:1)`;
+      warning.classList.toggle('good', passes);
+    }
+
+
+// -----------------------------------------------------------------------------
+// PREVIEW RENDERING
+// Applies current state to the live preview:
+// - CSS filters on map
+// - Label overlay visibility, colors, font, background
+// - Border/frame styles and shape mask
+// - Map annotations (scale/north), text filters, dimensions, contrast warning
+// -----------------------------------------------------------------------------
+    function renderPreview() {
+      if (!mapReady) return;
+      contrastNum.textContent = state.contrast;
+      brightnessNum.textContent = state.brightness;
+      saturationNum.textContent = state.saturation;
+      mapEl.style.filter = `${filterPresets[state.filterPreset] || ''} contrast(${state.contrast}%) brightness(${state.brightness}%) saturate(${state.saturation}%)`.trim();
+      opacityNum.textContent = state.labelOpacity;
+      mapLabelOverlay.style.display = state.labelStyle === 'none' ? 'none' : 'block';
+      if (state.labelStyle !== 'none') {
+        mapLabelOverlay.className = `map-label-overlay ${state.labelStyle}`;
+        mapLabelOverlay.style.fontFamily = state.labelFont;
+        const hex = state.labelBgColor;
+        const alpha = state.labelOpacity / 100;
+        const rgb = [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16));
+        mapLabelOverlay.style.backgroundColor = state.labelStyle === 'special-minimal'
+          ? 'transparent'
+          : `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+        cityNameEl.style.color = state.labelTextColor;
+        cityCoordsEl.style.color = state.labelCoordColor;
+        cityCountryEl.style.color = state.labelCountryColor;
+        [cityNameEl, cityCoordsEl, cityCountryEl].forEach(element => {
+          element.style.fontFamily = state.labelFont;
+        });
+      }
+      borderWidthVal.textContent = state.borderWidth;
+      $('outerBorderRadiusVal').textContent = state.outerBorderRadius;
+      $('innerBorderRadiusVal').textContent = state.innerBorderRadius;
+      borderUiItems.forEach(item => {
+        item.style.display = state.borderEnabled ? 'flex' : 'none';
+      });
+      mapFrame.style.border = state.borderEnabled
+        ? `${state.borderWidth}px solid ${state.borderColor}`
+        : 'none';
+      mapFrame.style.backgroundColor = state.borderEnabled ? state.borderColor : '#ffffff';
+      mapFrame.style.borderRadius = `${state.outerBorderRadius}px`;
+      mapEl.style.borderRadius = `${state.innerBorderRadius}px`;
+      mapFrame.className = `map-frame ratio-${state.format}`;
+      renderShapeMask();
+      renderMapAnnotations();
+      // Reapply the shared map policy so preview styling follows export styling.
+      applyMapState(map, state);
+      updateOutputDimensions();
+      updateContrastWarning();
+    }
+
+
+// -----------------------------------------------------------------------------
+// UI UPDATE WRAPPER
+// Sync state from controls, then re-render preview.
+// -----------------------------------------------------------------------------
+    function updateStateFromControls() {
+      syncStateFromControls();
+      renderPreview();
+    }
+
+
+// -----------------------------------------------------------------------------
+// SHAPE MASKS
+// getShapePath: create scaled Path2D for a shape.
+// getShapeSvgPath: SVG path strings for various shapes (100×¹00 viewBox).
+// renderShapeMask: show/hide and configure the SVG shape mask overlay.
+// -----------------------------------------------------------------------------
+    function getShapePath(shape, width, height) {
+      const svgPath = getShapeSvgPath(shape);
+      const path = new Path2D(svgPath);
+      const transform = new DOMMatrix().scale(width / 100, height / 100);
+      return new Path2D(path, transform);
+    }
+
+    function getShapeSvgPath(shape) {
+      if (shape === 'circle') return 'M 50 10 A 40 40 0 1 1 49.99 10 Z';
+      if (shape === 'heart') return 'M 50 88 C 5 58 5 25 27 15 C 40 9 49 20 50 31 C 51 20 60 9 73 15 C 95 25 95 58 50 88 Z';
+      if (shape === 'star') return 'M 50 8 L 61 36 L 91 38 L 68 57 L 76 88 L 50 70 L 24 88 L 32 57 L 9 38 L 39 36 Z';
+      if (shape === 'house') return 'M 10 45 L 50 10 L 90 45 L 82 45 L 82 90 L 60 90 L 60 63 L 40 63 L 40 90 L 18 90 L 18 45 Z';
+      if (shape === 'spiral') return 'M 50 7 C 85 7 94 34 91 55 C 88 81 67 94 43 91 C 18 88 6 68 10 46 C 14 24 33 14 52 17 C 72 20 81 36 78 53 C 75 70 61 78 47 75 C 33 72 27 61 30 49 C 33 37 43 32 53 35 C 63 38 67 46 64 54 C 62 61 56 64 50 62 L 50 49 C 52 51 53 50 53 49 C 53 47 51 46 49 47 C 46 48 45 52 47 55 C 50 59 56 58 59 54 C 63 48 60 41 54 39 C 45 36 37 42 35 51 C 32 63 41 71 51 72 C 66 73 76 61 75 48 C 74 29 58 18 42 20 C 19 23 8 43 13 62 C 19 84 42 94 62 86 C 86 77 96 50 86 28 C 79 13 65 7 50 7 Z';
+      if (shape === 'peace') return 'M 50 8 A 42 42 0 1 1 49.99 8 Z M 44 20 L 56 20 L 56 56 L 79 79 L 70 87 L 50 67 L 30 87 L 21 79 L 44 56 Z';
+      if (shape === 'smiley') return 'M 50 8 A 42 42 0 1 1 49.99 8 Z M 31 32 A 6 6 0 1 1 30.99 32 Z M 69 32 A 6 6 0 1 1 68.99 32 Z M 25 57 C 31 81 69 81 75 57 L 64 57 C 59 68 41 68 36 57 Z';
+      if (shape === 'diamond') return 'M 50 7 L 92 50 L 50 93 L 8 50 Z';
+      if (shape === 'hexagon') return 'M 27 10 L 73 10 L 94 50 L 73 90 L 27 90 L 6 50 Z';
+      if (shape === 'cross') return 'M 35 8 L 65 8 L 65 35 L 92 35 L 92 65 L 65 65 L 65 92 L 35 92 L 35 65 L 8 65 L 8 35 L 35 35 Z';
+      if (shape === 'cloud') return 'M 22 79 C 7 79 4 57 17 50 C 13 31 34 19 48 31 C 57 12 85 21 84 43 C 101 48 96 79 77 79 Z';
+      return '';
+    }
+
+    function renderShapeMask() {
+      const mask = $('shapeMask');
+      if (state.shape === 'none') {
+        mask.style.display = 'none';
+        return;
+      }
+      mask.style.display = 'block';
+      $('shapeCutoutPath').setAttribute('d', getShapeSvgPath(state.shape));
+      $('shapeMaskColor').setAttribute('fill', state.shapeColor);
+    }
+
+    document.getElementById('settingsForm').addEventListener('input', updateStateFromControls);
+    document.getElementById('settingsForm').addEventListener('change', updateStateFromControls);
+    let mapReady = false;
+
+
+// -----------------------------------------------------------------------------
+// INITIALIZATION
+// Reset form, apply default values to controls, and sync state.
+// Runs on DOMContentLoaded and on pageshow if persisted.
+// -----------------------------------------------------------------------------
+    function initializeDefaults() {
+		
+		
+		
+	
+		
+      const form = document.getElementById('settingsForm');
+      if (form) form.reset();
+      document.getElementById('roadColor').value = "#374151";
+      document.getElementById('boundaryColor').value = "#9ca3af";
+      document.getElementById('borderWidth').value = "16";
+      document.getElementById('borderWidthVal').textContent = "16";
+      document.getElementById('searchInput').value = START_LOCATION.city;
+      document.getElementById('cityName').textContent = START_LOCATION.city;
+      document.getElementById('cityCountry').textContent = START_LOCATION.country;
+      document.getElementById('colorPresetSelect').value = DEFAULTS.preset;
+      document.getElementById('labelStyle').value = DEFAULTS.labelStyle;
+      document.getElementById('labelOpacity').value = DEFAULTS.labelOpacity;
+      document.getElementById('textFilter').value = DEFAULTS.textFilter;
+      writeControl('formatSelect', DEFAULTS.format);
+      writeControl('exportType', DEFAULTS.exportType);
+      writeControl('exportDpi', DEFAULTS.exportDpi);
+      writeControl('filterPreset', DEFAULTS.filterPreset);
+      writeControl('contrastVal', DEFAULTS.contrast);
+      writeControl('brightnessVal', DEFAULTS.brightness);
+      writeControl('saturationVal', DEFAULTS.saturation);
+      writeControl('terrainToggle', DEFAULTS.terrainEnabled);
+      writeControl('mountainColor', DEFAULTS.mountainColor);
+      writeControl('terrainExaggeration', DEFAULTS.terrainExaggeration);
+      writeControl('stlBuildingsToggle', DEFAULTS.stlBuildingsEnabled);
+      writeControl('stlRoadsToggle', DEFAULTS.stlRoadsEnabled);
+      writeControl('scaleToggle', DEFAULTS.scaleEnabled);
+      writeControl('northToggle', DEFAULTS.northEnabled);
+      updateBorderElementsVisibility();
+      updateLabelStyle();
+      updateBorderStyle();
+      if (mapReady) {
+        applyTextFilters();
+        applyColorPreset(DEFAULTS.preset);
+      }
+      syncStateFromControls();
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeDefaults);
+    window.addEventListener('pageshow', event => {
+      if (event.persisted) initializeDefaults();
+    });
+
+
+// -----------------------------------------------------------------------------
+// ACCORDION SECTIONS
+// Collapsible section blocks with ARIA attributes and keyboard support.
+// Only one section expanded at a time.
+// -----------------------------------------------------------------------------
+    // Accordion Control
+    const sectionBlocks = document.querySelectorAll('.section-block');
+    sectionBlocks.forEach((block, index) => {
+      const header = block.querySelector('.section-header');
+      const body = block.querySelector('.section-body');
+      const bodyId = body.id || `section-body-${index + 1}`;
+      body.id = bodyId;
+      header.id = header.id || `section-header-${index + 1}`;
+      header.setAttribute('role', 'button');
+      header.setAttribute('tabindex', '0');
+      header.setAttribute('aria-controls', bodyId);
+      header.setAttribute('aria-expanded', String(!block.classList.contains('collapsed')));
+      const toggleSection = () => {
+        const isCollapsed = block.classList.contains('collapsed');
+        sectionBlocks.forEach(b => {
+          b.classList.add('collapsed');
+          b.querySelector('.section-header').setAttribute('aria-expanded', 'false');
+        });
+        if (isCollapsed) {
+          block.classList.remove('collapsed');
+          header.setAttribute('aria-expanded', 'true');
+        }
+      };
+      header.addEventListener('click', () => {
+        toggleSection();
+      });
+      header.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggleSection();
+        }
+      });
+    });
+
+    const fineTuningToggle = document.getElementById('fineTuningToggle');
+    const fineTuningControls = document.getElementById('fineTuningControls');
+    fineTuningToggle.addEventListener('click', () => {
+      const showControls = fineTuningControls.hidden;
+      fineTuningControls.hidden = !showControls;
+      fineTuningToggle.setAttribute('aria-expanded', String(showControls));
+      fineTuningToggle.textContent = showControls
+        ? 'Hide layer fine-tuning'
+        : 'Show layer fine-tuning';
+    });
+
+
+// -----------------------------------------------------------------------------
+
+// LIVE FILTERS (PRESETS + CONTRAST/BRIGHTNESS/SATURATION)
+// Apply CSS filter chain to map element based on preset and sliders.
+// -----------------------------------------------------------------------------
+    // Live Effects Engine
+    const mapEl = document.getElementById('map');
+    const filterPreset = document.getElementById('filterPreset');
+    const contrastVal = document.getElementById('contrastVal');
+    const contrastNum = document.getElementById('contrastNum');
+    const brightnessNum = document.getElementById('brightnessNum');
+    const saturationNum = document.getElementById('saturationNum');
+
+    const filterPresets = {
+      'none': '',
+      'grayscale': 'grayscale(100%)',
+      'vintage': 'sepia(50%) contrast(90%) saturate(85%)',
+      'high-contrast': 'grayscale(100%) contrast(190%)',
+      'invert': 'invert(100%) hue-rotate(180deg)'
+    };
+
+    function applyLiveFilters() {
+      setState({
+        filterPreset: readControl('filterPreset'),
+        contrast: Number(readControl('contrastVal')),
+        brightness: Number(readControl('brightnessVal')),
+        saturation: Number(readControl('saturationVal'))
+      });
+    }
+
+    filterPreset.addEventListener('change', applyLiveFilters);
+    contrastVal.addEventListener('input', applyLiveFilters);
+    $('brightnessVal').addEventListener('input', applyLiveFilters);
+    $('saturationVal').addEventListener('input', applyLiveFilters);
+
+
+// -----------------------------------------------------------------------------
+
+// LABEL OVERLAY & FONT STYLING
+// Controls for label position/style, font, and separate colors
+// for city name, coordinates, and country.
+// -----------------------------------------------------------------------------
+    // Text Label Overlay & Font Styling (with 3 separate color fields)
+    const mapLabelOverlay = document.getElementById('mapLabelOverlay');
+    const labelStyle = document.getElementById('labelStyle');
+    const labelTextColor = document.getElementById('labelTextColor');
+    const labelCoordColor = document.getElementById('labelCoordColor');
+    const labelCountryColor = document.getElementById('labelCountryColor');
+    const labelBgColor = document.getElementById('labelBgColor');
+    const labelOpacity = document.getElementById('labelOpacity');
+    const opacityNum = document.getElementById('opacityNum');
+    const labelFontSelect = document.getElementById('labelFontSelect');
+
+    // Capture the preview's label geometry once so canvas export and DOM preview
+    // use the same offsets, baselines, font sizes, and colors.
+    function getLabelRenderModel(targetMap = map) {
+      const mapRect = targetMap.getContainer().getBoundingClientRect();
+      const overlayRect = mapLabelOverlay.getBoundingClientRect();
+      const previewScale = targetMap.getContainer().clientWidth / mapRect.width;
+      const children = [cityNameEl, cityCoordsEl, cityCountryEl].map(element => {
+        const rect = element.getBoundingClientRect();
+        const computed = getComputedStyle(element);
+        return {
+          x: (rect.left - overlayRect.left) * previewScale,
+          baselineY: (rect.top - overlayRect.top + parseFloat(computed.fontSize)) * previewScale,
+          fontSize: parseFloat(computed.fontSize) * previewScale,
+          fontWeight: computed.fontWeight,
+          textAlign: computed.textAlign,
+          color: computed.color
+        };
+      });
+      return {
+        x: (overlayRect.left - mapRect.left) * previewScale,
+        y: (overlayRect.top - mapRect.top) * previewScale,
+        width: overlayRect.width * previewScale,
+        height: overlayRect.height * previewScale,
+        borderRadius: parseFloat(getComputedStyle(mapLabelOverlay).borderRadius) * previewScale,
+        children
+      };
+    }
+
+    function updateLabelStyle() {
+      syncStateFromControls();
+      renderPreview();
+    }
+
+    labelStyle.addEventListener('change', updateLabelStyle);
+    labelTextColor.addEventListener('input', updateLabelStyle);
+    labelCoordColor.addEventListener('input', updateLabelStyle);
+    labelCountryColor.addEventListener('input', updateLabelStyle);
+    labelBgColor.addEventListener('input', updateLabelStyle);
+    labelOpacity.addEventListener('input', updateLabelStyle);
+    labelFontSelect.addEventListener('change', updateLabelStyle);
+
+
+// -----------------------------------------------------------------------------
+// BORDER & ASPECT RATIO
+// Toggle border, choose color/width, and adjust inner/outer radii.
+// Format select changes aspect ratio and resizes map.
+// -----------------------------------------------------------------------------
+    // Border & Aspect Ratio Controls
+    const borderCheckbox = document.getElementById('borderCheckbox');
+    const borderColor = document.getElementById('borderColor');
+    const borderWidth = document.getElementById('borderWidth');
+    const borderWidthVal = document.getElementById('borderWidthVal');
+    const borderUiItems = document.querySelectorAll('.border-ui-item');
+
+    function updateBorderElementsVisibility() {
+      renderPreview();
+    }
+
+    function updateBorderStyle() {
+      syncStateFromControls();
+      renderPreview();
+    }
+
+    borderCheckbox.addEventListener('change', updateBorderStyle);
+    borderColor.addEventListener('input', updateBorderStyle);
+    borderWidth.addEventListener('input', updateBorderStyle);
+    $('outerBorderRadius').addEventListener('input', updateBorderStyle);
+    $('innerBorderRadius').addEventListener('input', updateBorderStyle);
+
+    const formatSelect = document.getElementById('formatSelect');
+    formatSelect.addEventListener('change', () => {
+      setState({ format: readControl('formatSelect') });
+      setTimeout(() => map.resize(), 300);
+    });
+    $('exportDpi').addEventListener('change', updateOutputDimensions);
+    function getFileTimestamp() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}_${hh}${min}${ss}`;
+    }
+
+// -----------------------------------------------------------------------------
+// PROJECTS & USER PRESETS
+// Versioned project JSON keeps a design reproducible and makes manual presets
+// independent from the built-in palette catalog.
+// -----------------------------------------------------------------------------
+    function applyProjectState(projectState) {
+      const simpleKeys = [
+        'format', 'exportType', 'exportDpi', 'labelStyle', 'labelOpacity', 'labelFont',
+        'labelTextColor', 'labelCoordColor', 'labelCountryColor', 'labelBgColor', 'textFilter',
+        'filterPreset', 'contrast', 'brightness', 'saturation', 'shape', 'shapeColor',
+        'terrainEnabled', 'mountainColor', 'terrainExaggeration', 'stlBuildingsEnabled',
+        'stlRoadsEnabled', 'scaleEnabled', 'northEnabled', 'borderEnabled', 'borderColor',
+        'borderWidth', 'outerBorderRadius', 'innerBorderRadius'
+      ];
+      const controlMap = {
+        format: 'formatSelect', exportType: 'exportType', exportDpi: 'exportDpi', labelStyle: 'labelStyle',
+        labelOpacity: 'labelOpacity', labelFont: 'labelFontSelect', labelTextColor: 'labelTextColor',
+        labelCoordColor: 'labelCoordColor', labelCountryColor: 'labelCountryColor', labelBgColor: 'labelBgColor',
+        textFilter: 'textFilter', filterPreset: 'filterPreset', contrast: 'contrastVal', brightness: 'brightnessVal',
+        saturation: 'saturationVal', shape: 'shapeSelect', shapeColor: 'shapeColor', terrainEnabled: 'terrainToggle',
+        mountainColor: 'mountainColor', terrainExaggeration: 'terrainExaggeration', stlBuildingsEnabled: 'stlBuildingsToggle',
+        stlRoadsEnabled: 'stlRoadsToggle', scaleEnabled: 'scaleToggle', northEnabled: 'northToggle',
+        borderEnabled: 'borderCheckbox', borderColor: 'borderColor', borderWidth: 'borderWidth',
+        outerBorderRadius: 'outerBorderRadius', innerBorderRadius: 'innerBorderRadius'
+      };
+      simpleKeys.forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(projectState, key) && controlMap[key]) writeControl(controlMap[key], projectState[key]);
+      });
+      Object.entries(projectState.layers || {}).forEach(([key, value]) => {
+        if ($(key)) writeControl(key, value);
+      });
+      if (Array.isArray(projectState.layerOrder)) state.layerOrder = [...projectState.layerOrder];
+      if (Object.prototype.hasOwnProperty.call(projectState, 'preset')) state.preset = projectState.preset;
+      if (projectState.city) $('cityName').textContent = projectState.city;
+      if (projectState.coordinates) $('cityCoords').textContent = projectState.coordinates;
+      if (projectState.country) $('cityCountry').textContent = projectState.country;
+      if (Array.isArray(projectState.center) && Number.isFinite(projectState.zoom)) {
+        map.jumpTo({ center: projectState.center, zoom: projectState.zoom, bearing: projectState.bearing || 0, pitch: projectState.pitch || 0 });
+      }
+      syncStateFromControls();
+      triggerAllLayerUpdates();
+      renderPreview();
+    }
+
+    function currentProject() {
+      syncStateFromControls();
+      return CartivaProject.create(state);
+    }
+
+    const saveProjectBtn = $('saveProjectBtn');
+    const downloadProjectBtn = $('downloadProjectBtn');
+    const loadProjectBtn = $('loadProjectBtn');
+    const savePresetBtn = $('savePresetBtn');
+    const loadPresetBtn = $('loadPresetBtn');
+    const projectFileInput = $('projectFileInput');
+    saveProjectBtn?.addEventListener('click', () => {
+      CartivaProject.save(currentProject());
+      setStatus('Project saved in this browser.');
+    });
+    downloadProjectBtn?.addEventListener('click', () => {
+      CartivaProject.download(currentProject(), `cartiva_${getFileTimestamp()}.json`);
+      setStatus('Project JSON downloaded.');
+    });
+    loadProjectBtn?.addEventListener('click', () => projectFileInput?.click());
+    projectFileInput?.addEventListener('change', async () => {
+      const file = projectFileInput.files?.[0];
+      if (!file) return;
+      try {
+        const project = await CartivaProject.readFile(file);
+        applyProjectState(project.state);
+        setStatus('Project loaded.');
+      } catch (error) {
+        CartivaDiagnostics.report('project.load', error);
+        setStatus(`Project load failed: ${error.message}`, true);
+      } finally {
+        projectFileInput.value = '';
+      }
+    });
+    savePresetBtn?.addEventListener('click', () => {
+      const name = window.prompt('Preset name');
+      if (!name?.trim()) return;
+      CartivaProject.savePreset(name.trim(), currentProject().state);
+      setStatus(`Preset saved: ${name.trim()}`);
+    });
+    loadPresetBtn?.addEventListener('click', () => {
+      const presets = CartivaProject.listPresets();
+      if (!presets.length) { setStatus('No saved user presets.', true); return; }
+      const name = window.prompt(`Preset name:\n${presets.map(item => item.name).join('\n')}`);
+      const preset = presets.find(item => item.name === name);
+      if (!preset) { setStatus('Preset not found.', true); return; }
+      applyProjectState(preset.state);
+      setStatus(`Preset loaded: ${name}`);
+    });
+
+    document.querySelectorAll('input[type="color"]').forEach(input => {
+      if (!input.getAttribute('aria-label')) {
+        const title = input.getAttribute('title') || input.id.replace(/([A-Z])/g, ' $1');
+        input.setAttribute('aria-label', title.trim());
+      }
+    });
+
+
+// -----------------------------------------------------------------------------
