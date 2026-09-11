@@ -565,9 +565,21 @@
             <button type="button" class="secondary-action-btn" id="randomizeDesignBtn">Randomize design</button>
           </div>
         </div>
-
       </div>
 	  <!-- /Sidebar-Content -->
+
+		<!-- Buttons: Save, Load, Download, save -->
+		<div class="project-actions" aria-label="Project actions">
+			<button type="button" class="secondary-action-btn" id="saveProjectBtn" title="Save the current design in this browser">Save project</button>
+			<button type="button" class="secondary-action-btn" id="downloadProjectBtn" title="Download the current design as JSON">Download project</button>
+			<button type="button" class="secondary-action-btn" id="loadProjectBtn" title="Load a project JSON file">Load project</button>	
+			<button type="button" class="secondary-action-btn" id="savePresetBtn" title="Save the current design as a reusable preset">Save preset</button>
+			<button type="button" class="secondary-action-btn" id="loadPresetBtn" title="Load a saved reusable preset">Load preset</button>
+			<input type="file" id="projectFileInput" accept="application/json,.json" hidden>
+		</div>
+		
+		<div class="sidebar-area-spacer"></div>
+		<div class="sidebar-area-spacer"></div>
 
       <!-- Export Button & Metadata Footer -->
       <div class="sidebar-footer">
@@ -583,14 +595,8 @@
             <span id="threeMfExportBtnLabel">Export 3D model (.3mf)</span>
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
 		</button>
-    <div class="project-actions" aria-label="Project actions">
-      <button type="button" class="secondary-action-btn" id="saveProjectBtn" title="Save the current design in this browser">Save project</button>
-      <button type="button" class="secondary-action-btn" id="downloadProjectBtn" title="Download the current design as JSON">Download project</button>
-      <button type="button" class="secondary-action-btn" id="loadProjectBtn" title="Load a project JSON file">Load project</button>
-      <button type="button" class="secondary-action-btn" id="savePresetBtn" title="Save the current design as a reusable preset">Save preset</button>
-      <button type="button" class="secondary-action-btn" id="loadPresetBtn" title="Load a saved reusable preset">Load preset</button>
-      <input type="file" id="projectFileInput" accept="application/json,.json" hidden>
-    </div>
+		
+    
 		
         <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
         <div class="footer-meta">
